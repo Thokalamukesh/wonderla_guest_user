@@ -620,10 +620,7 @@ class _ExploreTile extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(compact ? 10 : 15),
           decoration: BoxDecoration(
-            border: const Border(
-              left: BorderSide(color: wonderlaCobalt, width: 5),
-              top: BorderSide(color: wonderlaFlagRed, width: 2),
-            ),
+            border: Border.all(color: wonderlaCobalt, width: 1.2),
             borderRadius: BorderRadius.circular(24),
             boxShadow: const [
               BoxShadow(
