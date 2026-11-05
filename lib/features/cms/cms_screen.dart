@@ -646,22 +646,31 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     },
   );
 
-  Widget _navItem(String title, IconData icon) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 2),
-    child: ListTile(
-      selected: _section == title,
-      selectedColor: wonderlaWhite,
-      selectedTileColor: _brandNavy,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      leading: Icon(icon, size: 20),
-      title: Text(
-        title,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+  Widget _navItem(String title, IconData icon) => Builder(
+    builder: (tileContext) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          selected: _section == title,
+          selectedColor: wonderlaWhite,
+          selectedTileColor: _brandNavy,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          leading: Icon(icon, size: 20),
+          title: Text(
+            title,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          onTap: () {
+            _changeSection(title);
+            final scaffold = Scaffold.maybeOf(tileContext);
+            if (scaffold?.isDrawerOpen ?? false) scaffold?.closeDrawer();
+          },
+        ),
       ),
-      onTap: () {
-        _changeSection(title);
-        if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
-      },
     ),
   );
 
