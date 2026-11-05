@@ -25,7 +25,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
     wonderlaBengaluruLatitude,
     wonderlaBengaluruLongitude,
   );
-  static const _navy = wonderlaNavy;
+  static const _navy = wonderlaCobalt;
   static const _ink = wonderlaNavy;
   static const _selectedPinFill = wonderlaFlagRed;
 

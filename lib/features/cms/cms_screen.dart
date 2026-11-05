@@ -8,7 +8,7 @@ import 'cms_api.dart';
 import '../../shared/scroll_reveal.dart';
 import '../../shared/wonderla_palette.dart';
 
-const _brandNavy = wonderlaNavy;
+const _brandNavy = wonderlaCobalt;
 const _ink = wonderlaNavy;
 
 class CmsScreen extends StatefulWidget {

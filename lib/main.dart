@@ -16,7 +16,7 @@ class WonderlaApp extends StatelessWidget {
       useMaterial3: true,
       scaffoldBackgroundColor: wonderlaCream,
       colorScheme: const ColorScheme.light(
-        primary: wonderlaNavy,
+        primary: wonderlaCobalt,
         onPrimary: wonderlaWhite,
         secondary: wonderlaFlagRed,
         onSecondary: wonderlaWhite,
@@ -25,7 +25,7 @@ class WonderlaApp extends StatelessWidget {
         error: wonderlaFlagRed,
         onError: wonderlaWhite,
       ),
-      iconTheme: const IconThemeData(color: wonderlaNavy),
+      iconTheme: const IconThemeData(color: wonderlaCobalt),
       fontFamily: 'Roboto',
     ),
     home: const VisitorHome(),

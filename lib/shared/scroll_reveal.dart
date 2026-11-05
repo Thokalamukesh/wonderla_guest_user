@@ -20,8 +20,20 @@ class ScrollReveal extends StatefulWidget {
 class _ScrollRevealState extends State<ScrollReveal> {
   ScrollPosition? _position;
   Timer? _timer;
+  Timer? _fallbackTimer;
   bool _revealed = false;
   bool _checkScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // A failed or delayed viewport measurement must never leave real content
+    // at zero opacity forever.
+    _fallbackTimer = Timer(
+      widget.delay + const Duration(milliseconds: 1600),
+      _reveal,
+    );
+  }
 
   @override
   void didChangeDependencies() {
@@ -47,17 +59,22 @@ class _ScrollRevealState extends State<ScrollReveal> {
       final bottom = top + render.size.height;
       final screenHeight = MediaQuery.sizeOf(context).height;
       if (bottom > 92 && top < screenHeight - 56) {
-        _timer = Timer(widget.delay, () {
-          if (mounted) setState(() => _revealed = true);
-        });
+        _timer = Timer(widget.delay, _reveal);
       }
     });
+  }
+
+  void _reveal() {
+    if (!mounted || _revealed) return;
+    _fallbackTimer?.cancel();
+    setState(() => _revealed = true);
   }
 
   @override
   void dispose() {
     _position?.removeListener(_scheduleVisibilityCheck);
     _timer?.cancel();
+    _fallbackTimer?.cancel();
     super.dispose();
   }
 

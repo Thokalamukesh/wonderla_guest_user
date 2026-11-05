@@ -8,7 +8,7 @@ import '../park_map/services/location_service.dart';
 import '../park_map/services/open_street_map_service.dart';
 import '../../shared/wonderla_palette.dart';
 
-const _mapNavy = wonderlaNavy;
+const _mapNavy = wonderlaCobalt;
 const _mapInk = wonderlaNavy;
 const _mapCanvas = wonderlaCream;
 

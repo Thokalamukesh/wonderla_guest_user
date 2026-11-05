@@ -621,7 +621,7 @@ class _ExploreTile extends StatelessWidget {
           padding: EdgeInsets.all(compact ? 10 : 15),
           decoration: BoxDecoration(
             border: const Border(
-              left: BorderSide(color: _navy, width: 5),
+              left: BorderSide(color: wonderlaCobalt, width: 5),
               top: BorderSide(color: wonderlaFlagRed, width: 2),
             ),
             borderRadius: BorderRadius.circular(24),
@@ -639,7 +639,7 @@ class _ExploreTile extends StatelessWidget {
                 width: compact ? 42 : 60,
                 height: compact ? 42 : 60,
                 decoration: BoxDecoration(
-                  color: wonderlaNavy,
+                  color: wonderlaCobalt,
                   borderRadius: BorderRadius.circular(compact ? 14 : 18),
                 ),
                 child: Icon(
@@ -747,9 +747,9 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: _pale,
     appBar: AppBar(
-      backgroundColor: _navy,
+      backgroundColor: wonderlaCobalt,
       foregroundColor: Colors.white,
-      surfaceTintColor: _navy,
+      surfaceTintColor: wonderlaCobalt,
       toolbarHeight: 82,
       title: Text(
         widget.title,
