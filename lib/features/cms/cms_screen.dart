@@ -862,7 +862,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Upload a photo for each home screen card. Save changes to publish them for this park.',
+                    'Upload a photo for each home screen card. Card images save automatically for this park.',
                     style: TextStyle(color: wonderlaNavy, fontSize: 13),
                   ),
                 ),
@@ -885,6 +885,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                       label: label,
                       value: cfg[key]?.toString() ?? '',
                       onChanged: (v) => setState(() => cfg[key] = v),
+                      onUploaded: (_) => _savePark(),
                     ),
                   ),
                 ],
@@ -1862,12 +1863,14 @@ class _ImagePickerField extends StatefulWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    this.onUploaded,
   });
   final CmsApi api;
   final String parkSlug;
   final String label;
   final String value;
   final ValueChanged<String> onChanged;
+  final Future<void> Function(String url)? onUploaded;
   @override
   State<_ImagePickerField> createState() => _ImagePickerFieldState();
 }
@@ -1894,6 +1897,7 @@ class _ImagePickerFieldState extends State<_ImagePickerField> {
       final url = await widget.api.uploadImage(widget.parkSlug, file);
       if (mounted) setState(() => _preview = bytes);
       widget.onChanged(url);
+      await widget.onUploaded?.call(url);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {

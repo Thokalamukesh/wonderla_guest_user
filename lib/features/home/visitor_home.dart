@@ -241,9 +241,10 @@ class _VisitorHomeState extends State<VisitorHome> {
                             'EXPLORE THE PARK',
                             style: TextStyle(
                               color: _navy,
-                              fontSize: 28,
+                              fontSize: 27,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: -.6,
+                              letterSpacing: -1.1,
+                              height: .98,
                             ),
                           ),
                         ),
@@ -270,9 +271,9 @@ class _VisitorHomeState extends State<VisitorHome> {
                         itemCount: _tiles.length,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: columns,
-                          mainAxisExtent: compact ? 132 : 148,
+                          mainAxisExtent: compact ? 108 : 136,
                           crossAxisSpacing: compact ? 10 : 14,
-                          mainAxisSpacing: 14,
+                          mainAxisSpacing: 12,
                         ),
                         itemBuilder: (context, i) {
                           final tile = _tiles[i];
@@ -655,7 +656,7 @@ class _ExploreTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),
         child: Container(
-          padding: EdgeInsets.all(compact ? 10 : 15),
+          padding: EdgeInsets.all(compact ? 8 : 13),
           decoration: BoxDecoration(
             border: Border.all(color: wonderlaCobalt, width: 1.2),
             borderRadius: BorderRadius.circular(24),
@@ -673,7 +674,7 @@ class _ExploreTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(compact ? 14 : 18),
                 child: SizedBox(
                   width: compact ? 52 : 68,
-                  height: compact ? 62 : 76,
+                  height: compact ? 52 : 68,
                   child: imageUrl.isEmpty
                       ? Container(
                           color: const Color(0xffe9efff),
@@ -716,15 +717,15 @@ class _ExploreTile extends StatelessWidget {
                         letterSpacing: -.35,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: compact ? 3 : 6),
                     Text(
                       subtitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: wonderlaNavy,
-                        fontSize: 14,
-                        height: 1.3,
+                        fontSize: compact ? 12 : 14,
+                        height: 1.2,
                       ),
                     ),
                   ],
