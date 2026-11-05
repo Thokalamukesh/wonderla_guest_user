@@ -2,6 +2,10 @@
   "outputDirectory": "build/web",
   "rewrites": [
     {
+      "source": "/qr-code/api/:path*",
+      "destination": "https://wonderla-qr-project.vercel.app/qr-code/api/:path*"
+    },
+    {
       "source": "/qr-code/:park",
       "destination": "/"
     },

@@ -16,14 +16,14 @@ class CmsApi {
 
   static const _definedBaseUrl = String.fromEnvironment('API_BASE_URL');
   static String _configuredBaseUrl() {
-    if (_definedBaseUrl.isNotEmpty) return _definedBaseUrl;
     if (kIsWeb) {
       if (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1') {
         return 'http://localhost:3000';
       }
+      // Keep browser API requests same-origin; Vercel proxies them to the CMS.
       return Uri.base.origin;
     }
-    return '';
+    return _definedBaseUrl;
   }
 
   String _baseUrl;
