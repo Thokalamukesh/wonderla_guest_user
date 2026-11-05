@@ -4,6 +4,10 @@
     {
       "source": "/qr-code/:park",
       "destination": "/"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
     }
   ]
 }
