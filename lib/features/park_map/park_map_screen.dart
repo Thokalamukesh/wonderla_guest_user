@@ -27,7 +27,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
   );
   static const _navy = wonderlaNavy;
   static const _ink = wonderlaNavy;
-  static const _selectedPinFill = wonderlaCream;
+  static const _selectedPinFill = wonderlaFlagRed;
 
   final _map = MapController();
   final _search = TextEditingController();
@@ -1083,8 +1083,8 @@ class _PlacePin extends StatelessWidget {
           height: selected ? 44 : 40,
           decoration: BoxDecoration(
             color: selected
-                ? _ParkMapScreenState._navy
-                : _ParkMapScreenState._selectedPinFill,
+                ? _ParkMapScreenState._selectedPinFill
+                : _ParkMapScreenState._navy,
             shape: BoxShape.circle,
             border: Border.all(color: _ParkMapScreenState._navy, width: 2),
             boxShadow: const [BoxShadow(color: Color(0x42071a3d), blurRadius: 5)],
@@ -1092,9 +1092,7 @@ class _PlacePin extends StatelessWidget {
           child: Icon(
             place.icon,
             size: 22,
-            color: selected
-                ? _ParkMapScreenState._selectedPinFill
-                : _ParkMapScreenState._navy,
+            color: Colors.white,
           ),
         ),
         Container(width: 3, height: 13, color: _ParkMapScreenState._navy),

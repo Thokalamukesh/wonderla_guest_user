@@ -1565,14 +1565,14 @@ class _AdminDashboardState extends State<_AdminDashboard> {
           children: [
             Icon(
               error ? Icons.error_outline : Icons.check_circle_outline,
-              color: error ? wonderlaNavy : wonderlaNavy,
+              color: error ? wonderlaFlagRed : wonderlaNavy,
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 message,
                 style: TextStyle(
-                  color: error ? wonderlaNavy : wonderlaNavy,
+                  color: error ? wonderlaFlagRed : wonderlaNavy,
                 ),
               ),
             ),

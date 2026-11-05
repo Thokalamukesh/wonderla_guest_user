@@ -514,7 +514,8 @@ class _HeroCard extends StatelessWidget {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white54),
+                  color: wonderlaFlagRed,
+                  border: Border.all(color: wonderlaFlagRed),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: const Text(
@@ -587,7 +588,10 @@ class _ExploreTile extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(compact ? 10 : 15),
           decoration: BoxDecoration(
-            border: const Border(left: BorderSide(color: _navy, width: 5)),
+            border: const Border(
+              left: BorderSide(color: _navy, width: 5),
+              top: BorderSide(color: wonderlaFlagRed, width: 2),
+            ),
             borderRadius: BorderRadius.circular(24),
             boxShadow: const [
               BoxShadow(
@@ -1049,11 +1053,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
 
   Color _waitColor(dynamic value) {
     final n = num.tryParse('$value') ?? 0;
-    return n >= 25
-        ? wonderlaNavy
-        : n >= 10
-        ? _navy
-        : wonderlaNavy;
+    return n >= 25 ? wonderlaFlagRed : _navy;
   }
 
   List<Widget> _guidelines() => [
