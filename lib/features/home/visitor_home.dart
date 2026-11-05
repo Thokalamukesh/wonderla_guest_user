@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../cms/cms_api.dart';
 import 'configured_park_map_screen.dart';
 import '../cms/cms_screen.dart';
 import '../../shared/scroll_reveal.dart';
+import '../../shared/wonderla_palette.dart';
 
-const _navy = Color(0xff142b5a);
-const _blue = Color(0xff254eae);
-const _pale = Color(0xfff0f4fb);
+const _navy = wonderlaNavy;
+const _blue = wonderlaCobalt;
+const _pale = wonderlaWhite;
 const _white = Colors.white;
 
 class VisitorHome extends StatefulWidget {
@@ -25,14 +27,14 @@ class _VisitorHomeState extends State<VisitorHome> {
   String? _error;
 
   static const _tiles = <(String, String, IconData)>[
-    ('PARK MAP', 'Find rides & facilities', Icons.map_outlined),
-    ('RIDES & EVENTS', 'Explore rides and shows', Icons.attractions_outlined),
-    ('DINING & MENU', 'Food, menus & prices', Icons.restaurant_outlined),
-    ('LIVE WAIT TIMES', 'Current ride queues', Icons.access_time_rounded),
-    ('RIDE GUIDELINES', 'Height limits & rules', Icons.straighten_rounded),
-    ('WAVE POOL & RAIN DANCE', 'Sessions & timings', Icons.waves_rounded),
-    ('SAFETY & HYGIENE', 'Plan a safe visit', Icons.health_and_safety_outlined),
-    ('MAINTENANCE LOG', 'Ride service updates', Icons.build_outlined),
+    ('PARK MAP', 'Find rides & facilities', LucideIcons.mapPinned),
+    ('RIDES & EVENTS', 'Explore rides and shows', LucideIcons.ferrisWheel),
+    ('DINING & MENU', 'Food, menus & prices', LucideIcons.utensils),
+    ('LIVE WAIT TIMES', 'Current ride queues', LucideIcons.timer),
+    ('RIDE GUIDELINES', 'Height limits & rules', LucideIcons.ruler),
+    ('WAVE POOL & RAIN DANCE', 'Sessions & timings', LucideIcons.waves),
+    ('SAFETY & HYGIENE', 'Plan a safe visit', LucideIcons.shieldCheck),
+    ('MAINTENANCE LOG', 'Ride service updates', LucideIcons.wrench),
   ];
 
   @override
@@ -211,7 +213,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                           child: Text(
                             'Choose what you want to discover.',
                             style: TextStyle(
-                              color: Color(0xff68758c),
+                              color: wonderlaNavy,
                               fontSize: 16,
                             ),
                           ),
@@ -258,7 +260,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                         const Expanded(
                           child: Text(
                             'Have a Wonder-ful day!',
-                            style: TextStyle(color: Color(0xff7d879a)),
+                            style: TextStyle(color: wonderlaNavy),
                           ),
                         ),
                         if (_parks.length > 1)
@@ -322,7 +324,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                         'Open your park guide for rides, dining and more.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0xff68758c),
+                          color: wonderlaNavy,
                           fontSize: 15,
                         ),
                       ),
@@ -343,7 +345,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                       clipBehavior: Clip.antiAlias,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
-                        side: const BorderSide(color: Color(0xffdce4f0)),
+                        side: const BorderSide(color: wonderlaCobalt),
                       ),
                       child: InkWell(
                         onTap: () => _loadPark(p['slug'] as String),
@@ -356,7 +358,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                             width: 52,
                             height: 52,
                             decoration: BoxDecoration(
-                              color: const Color(0xffedf1ff),
+                              color: wonderlaWhite,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(
@@ -458,10 +460,10 @@ class _HeroCard extends StatelessWidget {
     clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(30),
-      color: const Color(0xff536185),
+      color: wonderlaNavy,
       boxShadow: const [
         BoxShadow(
-          color: Color(0x22213d79),
+          color: Color(0x22071a3d),
           blurRadius: 23,
           offset: Offset(0, 12),
         ),
@@ -481,7 +483,7 @@ class _HeroCard extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0x10101c3d), Color(0xaa101c3d)],
+              colors: [Color(0x10071a3d), Color(0xaa071a3d)],
             ),
           ),
         ),
@@ -543,7 +545,7 @@ class _HeroCard extends StatelessWidget {
               Text(
                 '📍 $location',
                 style: const TextStyle(
-                  color: Color(0xffe8edff),
+                  color: wonderlaWhite,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -590,7 +592,7 @@ class _ExploreTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x0d243453),
+                color: Color(0x0d071a3d),
                 blurRadius: 10,
                 offset: Offset(0, 4),
               ),
@@ -602,10 +604,15 @@ class _ExploreTile extends StatelessWidget {
                 width: compact ? 42 : 60,
                 height: compact ? 42 : 60,
                 decoration: BoxDecoration(
-                  color: const Color(0xffedf0ff),
+                  color: wonderlaCobalt,
                   borderRadius: BorderRadius.circular(compact ? 14 : 18),
                 ),
-                child: Icon(icon, color: _blue, size: compact ? 22 : 29),
+                child: Icon(
+                  icon,
+                  color: wonderlaWhite,
+                  size: compact ? 22 : 29,
+                  opticalSize: compact ? 22 : 29,
+                ),
               ),
               SizedBox(width: compact ? 8 : 13),
               Expanded(
@@ -629,7 +636,7 @@ class _ExploreTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Color(0xff667085),
+                        color: wonderlaNavy,
                         fontSize: 14,
                         height: 1.3,
                       ),
@@ -639,7 +646,7 @@ class _ExploreTile extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right,
-                color: const Color(0xff8290ae),
+                color: wonderlaNavy,
                 size: compact ? 18 : 24,
               ),
             ],
@@ -781,7 +788,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                     tab.toUpperCase(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: _rideTab == tab ? Colors.white : Colors.blueGrey,
+                      color: _rideTab == tab ? Colors.white : wonderlaNavy,
                       fontSize: 17,
                       fontWeight: FontWeight.w900,
                     ),
@@ -835,7 +842,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xff667085),
+                          color: wonderlaNavy,
                           height: 1.35,
                         ),
                       ),
@@ -1003,7 +1010,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
       const SizedBox(height: 4),
       const Text(
         'Pull down to refresh the latest wait times.',
-        style: TextStyle(color: Colors.blueGrey),
+        style: TextStyle(color: wonderlaNavy),
       ),
       const SizedBox(height: 12),
       if (items.isEmpty) _empty('Live wait times'),
@@ -1044,10 +1051,10 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
   Color _waitColor(dynamic value) {
     final n = num.tryParse('$value') ?? 0;
     return n >= 25
-        ? const Color(0xffe84d1c)
+        ? wonderlaCobalt
         : n >= 10
         ? _blue
-        : const Color(0xff5189d7);
+        : wonderlaCobalt;
   }
 
   List<Widget> _guidelines() => [
@@ -1090,7 +1097,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                       ))
                         Chip(
                           label: Text(t),
-                          backgroundColor: const Color(0xffedf1ff),
+                          backgroundColor: wonderlaWhite,
                         ),
                     ],
                   ),
@@ -1151,7 +1158,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
               builder: (_) {
                 final item = _list('maintenanceLog')[i];
                 return Container(
-                  color: i.isEven ? Colors.white : const Color(0xffedf2fb),
+                  color: i.isEven ? Colors.white : wonderlaWhite,
                   padding: const EdgeInsets.all(15),
                   child: Row(
                     children: [
@@ -1164,7 +1171,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                       Expanded(
                         child: Text(
                           item['lastService']?.toString() ?? '',
-                          style: const TextStyle(color: Colors.blueGrey),
+                          style: const TextStyle(color: wonderlaNavy),
                         ),
                       ),
                       Text(item['checks']?.toString() ?? ''),
@@ -1227,7 +1234,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                 Text(
                   item['description']?.toString() ?? '',
                   style: const TextStyle(
-                    color: Color(0xff667085),
+                    color: wonderlaNavy,
                     height: 1.35,
                   ),
                 ),
@@ -1256,7 +1263,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
         width: 70,
         height: 70,
         decoration: BoxDecoration(
-          color: const Color(0xffedf2ff),
+          color: wonderlaWhite,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(icon, color: _blue, size: 32),
@@ -1286,7 +1293,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
     height: size,
     clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
-      color: const Color(0xffe8effc),
+      color: wonderlaWhite,
       borderRadius: BorderRadius.circular(17),
     ),
     child: path == null || path.isEmpty
@@ -1344,7 +1351,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
         const SizedBox(height: 8),
         Text(
           '$title will be available soon.',
-          style: const TextStyle(color: Colors.blueGrey),
+          style: const TextStyle(color: wonderlaNavy),
         ),
       ],
     ),
@@ -1353,12 +1360,12 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
     margin: const EdgeInsets.only(bottom: 12),
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: error ? const Color(0xffffeeee) : const Color(0xffeaf7ef),
+      color: error ? wonderlaWhite : wonderlaWhite,
       borderRadius: BorderRadius.circular(12),
     ),
     child: Text(
       message,
-      style: TextStyle(color: error ? Colors.red : Colors.green),
+      style: TextStyle(color: error ? wonderlaNavy : wonderlaCobalt),
     ),
   );
 }
@@ -1370,9 +1377,9 @@ class _BookingCallout extends StatelessWidget {
     margin: const EdgeInsets.only(top: 12),
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: const Color(0xfff3f6fc),
+      color: wonderlaWhite,
       borderRadius: BorderRadius.circular(15),
-      border: Border.all(color: const Color(0xffdce4f0)),
+      border: Border.all(color: wonderlaCobalt),
     ),
     child: const Row(
       children: [
@@ -1414,7 +1421,7 @@ class _LoadError extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.blueGrey),
+            style: const TextStyle(color: wonderlaNavy),
           ),
           const SizedBox(height: 15),
           FilledButton.icon(

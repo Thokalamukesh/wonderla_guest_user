@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'features/home/visitor_home.dart';
+import 'shared/wonderla_palette.dart';
 
 void main() => runApp(const WonderlaApp());
 
@@ -13,12 +14,18 @@ class WonderlaApp extends StatelessWidget {
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: const Color(0xfff1f5fb),
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xff1746a2),
-        primary: const Color(0xff1746a2),
-        secondary: const Color(0xffffcf20),
+      scaffoldBackgroundColor: wonderlaWhite,
+      colorScheme: const ColorScheme.light(
+        primary: wonderlaCobalt,
+        onPrimary: wonderlaWhite,
+        secondary: wonderlaNavy,
+        onSecondary: wonderlaWhite,
+        surface: wonderlaWhite,
+        onSurface: wonderlaNavy,
+        error: wonderlaNavy,
+        onError: wonderlaWhite,
       ),
+      iconTheme: const IconThemeData(color: wonderlaCobalt),
       fontFamily: 'Roboto',
     ),
     home: const VisitorHome(),

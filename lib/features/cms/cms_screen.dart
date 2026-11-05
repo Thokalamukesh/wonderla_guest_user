@@ -2,12 +2,14 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'cms_api.dart';
 import '../../shared/scroll_reveal.dart';
+import '../../shared/wonderla_palette.dart';
 
-const _brandBlue = Color(0xff1746a2);
-const _ink = Color(0xff17264a);
+const _brandBlue = wonderlaCobalt;
+const _ink = wonderlaNavy;
 
 class CmsScreen extends StatefulWidget {
   const CmsScreen({super.key});
@@ -129,7 +131,7 @@ class _LoginPageState extends State<_LoginPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xfff1f5fb),
+    backgroundColor: wonderlaWhite,
     body: Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -138,7 +140,7 @@ class _LoginPageState extends State<_LoginPage> {
           child: Card(
             color: Colors.white,
             elevation: 4,
-            shadowColor: const Color(0x25234381),
+            shadowColor: const Color(0x25071a3d),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
             ),
@@ -171,7 +173,7 @@ class _LoginPageState extends State<_LoginPage> {
                     const Text(
                       'Sign in to manage your park guide',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.blueGrey),
+                      style: TextStyle(color: wonderlaNavy),
                     ),
                     const SizedBox(height: 26),
                     TextFormField(
@@ -227,7 +229,7 @@ class _LoginPageState extends State<_LoginPage> {
                       const SizedBox(height: 12),
                       Text(
                         _error ?? widget.initialError!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: wonderlaNavy),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -254,7 +256,7 @@ class _LoginPageState extends State<_LoginPage> {
                       'Use your existing React CMS admin account. The backend URL is public configuration; never put server secrets here.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.blueGrey,
+                        color: wonderlaNavy,
                         fontSize: 11,
                         height: 1.4,
                       ),
@@ -285,20 +287,20 @@ class _AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<_AdminDashboard> {
   final _sections = const [
-    ('Park overview', Icons.dashboard_outlined),
-    ('Parks', Icons.park_outlined),
-    ('Rides', Icons.attractions_outlined),
-    ('Events', Icons.event_outlined),
-    ('Dining & menus', Icons.restaurant_outlined),
-    ('Live wait times', Icons.timer_outlined),
-    ('Wave pool & rain dance', Icons.waves_outlined),
-    ('Safety & hygiene', Icons.health_and_safety_outlined),
-    ('Maintenance log', Icons.build_outlined),
-    ('Ride guidelines', Icons.straighten_outlined),
-    ('Park map & places', Icons.map_outlined),
-    ('Google Maps settings', Icons.map_rounded),
-    ('Users', Icons.people_outline),
-    ('Site URL & QR codes', Icons.qr_code_2),
+    ('Park overview', LucideIcons.chartNoAxesCombined),
+    ('Parks', LucideIcons.building2),
+    ('Rides', LucideIcons.ferrisWheel),
+    ('Events', LucideIcons.calendarDays),
+    ('Dining & menus', LucideIcons.utensils),
+    ('Live wait times', LucideIcons.timer),
+    ('Wave pool & rain dance', LucideIcons.waves),
+    ('Safety & hygiene', LucideIcons.shieldCheck),
+    ('Maintenance log', LucideIcons.wrench),
+    ('Ride guidelines', LucideIcons.ruler),
+    ('Park map & places', LucideIcons.mapPinned),
+    ('Google Maps settings', LucideIcons.map),
+    ('Users', LucideIcons.users),
+    ('Site URL & QR codes', LucideIcons.qrCode),
   ];
   final _listKeys = const {
     'Rides': 'rides',
@@ -448,7 +450,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 980;
     return Scaffold(
-      backgroundColor: const Color(0xfff1f5fb),
+      backgroundColor: wonderlaWhite,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -518,7 +520,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xfffff5cc),
+                  color: wonderlaWhite,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -535,7 +537,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                       'PARK CMS',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.blueGrey,
+                        color: wonderlaNavy,
                         letterSpacing: 1.2,
                         fontWeight: FontWeight.bold,
                       ),
@@ -566,7 +568,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                 'MANAGE CONTENT',
                 style: TextStyle(
                   fontSize: 10,
-                  color: Colors.blueGrey,
+                  color: wonderlaNavy,
                   letterSpacing: 1.2,
                   fontWeight: FontWeight.w800,
                 ),
@@ -593,7 +595,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         const Divider(height: 1),
         ListTile(
           leading: const CircleAvatar(
-            backgroundColor: Color(0xfffff5cc),
+            backgroundColor: wonderlaWhite,
             child: Icon(Icons.person_outline, color: _brandBlue),
           ),
           title: Text(
@@ -618,7 +620,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     decoration: InputDecoration(
       labelText: 'Selected park',
       filled: true,
-      fillColor: const Color(0xfff7f8fc),
+      fillColor: wonderlaWhite,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
         borderSide: BorderSide.none,
@@ -648,8 +650,8 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     padding: const EdgeInsets.symmetric(vertical: 2),
     child: ListTile(
       selected: _section == title,
-      selectedColor: _brandBlue,
-      selectedTileColor: const Color(0xffedf2ff),
+      selectedColor: wonderlaWhite,
+      selectedTileColor: _brandBlue,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       leading: Icon(icon, size: 20),
       title: Text(
@@ -680,9 +682,22 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             Padding(
               padding: const EdgeInsets.only(right: 7),
               child: ChoiceChip(
-                avatar: Icon(icon, size: 17),
-                label: Text(title),
+                avatar: Icon(
+                  icon,
+                  size: 17,
+                  color: _section == title ? wonderlaWhite : _ink,
+                ),
+                label: Text(
+                  title,
+                  style: TextStyle(
+                    color: _section == title ? wonderlaWhite : _ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 selected: _section == title,
+                selectedColor: _brandBlue,
+                backgroundColor: wonderlaWhite,
+                side: const BorderSide(color: _ink),
                 onSelected: (_) => _changeSection(title),
               ),
             ),
@@ -715,7 +730,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   const SizedBox(height: 5),
                   Text(
                     _sectionSubtitle,
-                    style: const TextStyle(color: Colors.blueGrey),
+                    style: const TextStyle(color: wonderlaNavy),
                   ),
                 ],
               ),
@@ -866,7 +881,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
               title: Text(entry.key),
               trailing: Text(
                 '${(_config![entry.value] as List?)?.length ?? 0} items',
-                style: const TextStyle(color: Colors.blueGrey),
+                style: const TextStyle(color: wonderlaNavy),
               ),
               onTap: () => _changeSection(entry.key),
             ),
@@ -890,7 +905,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
           color: Colors.white,
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: const Color(0xfffff5cc),
+              backgroundColor: wonderlaWhite,
               child: const Icon(Icons.park_outlined, color: _brandBlue),
             ),
             title: Text(p['name']?.toString() ?? ''),
@@ -902,7 +917,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   IconButton(
                     tooltip: 'Delete park',
                     onPressed: () => _deletePark(p),
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    icon: const Icon(Icons.delete_outline, color: wonderlaNavy),
                   ),
                 _statusBadge(p['active'] == true),
               ],
@@ -979,7 +994,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               'Menu dishes, prices and veg markers are managed inside each outlet’s edit form.',
-              style: TextStyle(color: Colors.blueGrey.shade700),
+              style: TextStyle(color: wonderlaNavy),
             ),
           ),
       ],
@@ -1145,7 +1160,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
           padding: EdgeInsets.only(top: 12),
           child: Text(
             'This updates the selected park’s visitor map and pins. The existing Bengaluru walking map remains available separately.',
-            style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+            style: TextStyle(color: wonderlaNavy, fontSize: 12),
           ),
         ),
       ],
@@ -1215,7 +1230,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             const SizedBox(height: 10),
             const Text(
               'Keep this web fallback URL on printed QR codes. Configure Android App Links and iOS Universal Links on the same domain if you want installed apps to open the QR directly.',
-              style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+              style: TextStyle(color: wonderlaNavy, fontSize: 12),
             ),
           ],
         ),
@@ -1458,7 +1473,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      color: Colors.blueGrey,
+                      color: wonderlaNavy,
                       fontSize: 12,
                     ),
                   ),
@@ -1492,19 +1507,19 @@ class _AdminDashboardState extends State<_AdminDashboard> {
       active ? 'Active' : 'Inactive',
       style: TextStyle(
         fontSize: 11,
-        color: active ? Colors.green.shade800 : Colors.orange.shade900,
+        color: active ? wonderlaCobalt : wonderlaNavy,
         fontWeight: FontWeight.w700,
       ),
     ),
-    backgroundColor: active ? const Color(0xffe8f6ec) : const Color(0xfffff2d9),
-    side: BorderSide.none,
+    backgroundColor: active ? wonderlaCobalt : wonderlaWhite,
+    side: const BorderSide(color: wonderlaNavy),
     visualDensity: VisualDensity.compact,
   );
   Widget _thumbnail(String? url) => Container(
     width: 54,
     height: 54,
     decoration: BoxDecoration(
-      color: const Color(0xfffff5cc),
+      color: wonderlaWhite,
       borderRadius: BorderRadius.circular(12),
     ),
     clipBehavior: Clip.antiAlias,
@@ -1543,21 +1558,21 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         margin: const EdgeInsets.only(top: 14),
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
-          color: error ? const Color(0xffffeeee) : const Color(0xffeaf7ef),
+          color: error ? wonderlaWhite : wonderlaWhite,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
             Icon(
               error ? Icons.error_outline : Icons.check_circle_outline,
-              color: error ? Colors.red : Colors.green,
+              color: error ? wonderlaNavy : wonderlaCobalt,
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 message,
                 style: TextStyle(
-                  color: error ? Colors.red.shade900 : Colors.green.shade900,
+                  color: error ? wonderlaNavy : wonderlaCobalt,
                 ),
               ),
             ),
@@ -1855,7 +1870,7 @@ class _ImagePickerFieldState extends State<_ImagePickerField> {
         widget.label,
         style: const TextStyle(
           fontSize: 12,
-          color: Colors.blueGrey,
+          color: wonderlaNavy,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -1863,8 +1878,8 @@ class _ImagePickerFieldState extends State<_ImagePickerField> {
       Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xfff8f9fc),
-          border: Border.all(color: const Color(0xffe1e6ef)),
+          color: wonderlaWhite,
+          border: Border.all(color: wonderlaCobalt),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -1873,7 +1888,7 @@ class _ImagePickerFieldState extends State<_ImagePickerField> {
               width: 74,
               height: 74,
               decoration: BoxDecoration(
-                color: const Color(0xfffff5cc),
+                color: wonderlaWhite,
                 borderRadius: BorderRadius.circular(11),
               ),
               clipBehavior: Clip.antiAlias,
@@ -1890,7 +1905,7 @@ class _ImagePickerFieldState extends State<_ImagePickerField> {
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => const Icon(
                         Icons.broken_image_outlined,
-                        color: Colors.blueGrey,
+                        color: wonderlaNavy,
                       ),
                     ),
             ),
@@ -1911,7 +1926,7 @@ class _ImagePickerFieldState extends State<_ImagePickerField> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Colors.blueGrey,
+                      color: wonderlaNavy,
                       fontSize: 11,
                     ),
                   ),
@@ -1944,7 +1959,7 @@ class _ImagePickerFieldState extends State<_ImagePickerField> {
           padding: const EdgeInsets.only(top: 5),
           child: Text(
             _error!,
-            style: const TextStyle(color: Colors.red, fontSize: 12),
+            style: const TextStyle(color: wonderlaNavy, fontSize: 12),
           ),
         ),
       const SizedBox(height: 6),
@@ -2049,13 +2064,13 @@ class _ApiKeyCardState extends State<_ApiKeyCard> {
             child: Text(_saving ? 'Saving…' : 'Save key'),
           ),
           if (_message != null)
-            Text(_message!, style: const TextStyle(color: Colors.green)),
+            Text(_message!, style: const TextStyle(color: wonderlaCobalt)),
           if (_error != null)
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            Text(_error!, style: const TextStyle(color: wonderlaNavy)),
           const SizedBox(height: 12),
           const Text(
             'Restrict this browser key to the required Google Maps APIs and your web domains. This key is public to visitors; do not enter server credentials.',
-            style: TextStyle(fontSize: 12, color: Colors.blueGrey),
+            style: TextStyle(fontSize: 12, color: wonderlaNavy),
           ),
         ],
       ),
@@ -2178,7 +2193,7 @@ class _UsersManagerState extends State<_UsersManager> {
                         onPressed: () => _delete(u['username'] as String),
                         icon: const Icon(
                           Icons.delete_outline,
-                          color: Colors.red,
+                          color: wonderlaNavy,
                         ),
                       ),
               ),
@@ -2254,7 +2269,7 @@ class _UsersManagerState extends State<_UsersManager> {
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(
                     _error!,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: wonderlaNavy),
                   ),
                 ),
               const SizedBox(height: 12),
@@ -2294,7 +2309,7 @@ class _EmptyCard extends StatelessWidget {
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.blueGrey),
+            style: const TextStyle(color: wonderlaNavy),
           ),
         ],
       ),

@@ -11,6 +11,7 @@ import 'models/park_map_config.dart';
 import 'models/wonderla_location_catalog.dart';
 import 'services/location_service.dart';
 import 'services/open_street_map_service.dart';
+import '../../shared/wonderla_palette.dart';
 
 class ParkMapScreen extends StatefulWidget {
   const ParkMapScreen({super.key});
@@ -24,9 +25,9 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
     wonderlaBengaluruLatitude,
     wonderlaBengaluruLongitude,
   );
-  static const _green = Color(0xff1268c4);
-  static const _ink = Color(0xff173b68);
-  static const _wonderlaYellow = Color(0xffffd43b);
+  static const _green = wonderlaCobalt;
+  static const _ink = wonderlaNavy;
+  static const _wonderlaYellow = wonderlaCobalt;
 
   final _map = MapController();
   final _search = TextEditingController();
@@ -390,7 +391,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xfff3f6f3),
+      backgroundColor: wonderlaWhite,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -451,7 +452,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                   Polyline(
                     points: _route!.points,
                     strokeWidth: 6,
-                    color: const Color(0xff2488ec),
+                    color: wonderlaCobalt,
                     borderStrokeWidth: 2,
                     borderColor: Colors.white,
                   ),
@@ -750,7 +751,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
             SizedBox(height: 12),
             Text(
               'Loading locations inside the park…',
-              style: TextStyle(color: Colors.black54),
+              style: TextStyle(color: wonderlaNavy),
             ),
           ],
         ),
@@ -777,7 +778,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
             SizedBox(height: 10),
             Text(
               'Searching nearby locations…',
-              style: TextStyle(color: Colors.black54),
+              style: TextStyle(color: wonderlaNavy),
             ),
           ],
         ),
@@ -840,7 +841,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: const Color(0xff789087), size: 36),
+            Icon(icon, color: wonderlaNavy, size: 36),
             const SizedBox(height: 10),
             Text(
               title,
@@ -852,7 +853,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
               message,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Colors.black54,
+                color: wonderlaNavy,
                 fontSize: 12,
                 height: 1.4,
               ),
@@ -875,7 +876,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
     final isSelected = place.id == _selected?.id;
     final distance = _distanceTo(place);
     return Material(
-      color: isSelected ? const Color(0xffe8f2ff) : Colors.white,
+      color: isSelected ? wonderlaWhite : Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () => _directionsTo(place),
@@ -888,7 +889,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                 width: 52,
                 height: 52,
                 decoration: const BoxDecoration(
-                  color: Color(0xfffff3c4),
+                  color: wonderlaWhite,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(place.icon, color: _green, size: 26),
@@ -914,7 +915,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Colors.black54,
+                        color: wonderlaNavy,
                       ),
                     ),
                   ],
@@ -993,7 +994,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                     final step = route.steps[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: const Color(0xfffff3c4),
+                        backgroundColor: wonderlaWhite,
                         child: Text(
                           '${index + 1}',
                           style: const TextStyle(
@@ -1005,7 +1006,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                       title: Text(step.instruction),
                       trailing: Text(
                         _distanceLabel(step.distanceMeters),
-                        style: const TextStyle(color: Colors.black54),
+                        style: const TextStyle(color: wonderlaNavy),
                       ),
                     );
                   },
@@ -1032,13 +1033,13 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
 
   Widget _inlineNotice(String text, IconData icon, {Widget? action}) =>
       Material(
-        color: const Color(0xfffff8e9),
+        color: wonderlaWhite,
         borderRadius: BorderRadius.circular(13),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
           child: Row(
             children: [
-              Icon(icon, color: const Color(0xff94621c), size: 18),
+              Icon(icon, color: wonderlaNavy, size: 18),
               const SizedBox(width: 8),
               Expanded(child: Text(text, style: const TextStyle(fontSize: 11))),
               ?action,
@@ -1086,7 +1087,7 @@ class _PlacePin extends StatelessWidget {
                 : _ParkMapScreenState._wonderlaYellow,
             shape: BoxShape.circle,
             border: Border.all(color: _ParkMapScreenState._green, width: 2),
-            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 5)],
+            boxShadow: const [BoxShadow(color: Color(0x42071a3d), blurRadius: 5)],
           ),
           child: Icon(
             place.icon,
