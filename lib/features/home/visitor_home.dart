@@ -134,13 +134,14 @@ class _VisitorHomeState extends State<VisitorHome> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
+    final requestedSlug = _requestedSlug();
+    if (_loading && requestedSlug != null) {
       return const Scaffold(
         backgroundColor: _pale,
         body: Center(child: CircularProgressIndicator(color: _navy)),
       );
     }
-    if (_error != null) {
+    if (_error != null && requestedSlug != null) {
       return Scaffold(
         backgroundColor: _pale,
         body: SafeArea(
@@ -383,13 +384,44 @@ class _VisitorHomeState extends State<VisitorHome> {
                   },
                 ),
               ),
-              if (_parks.isEmpty)
+              if (_loading && _parks.isEmpty)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(
+                      child: CircularProgressIndicator(color: _navy),
+                    ),
+                  ),
+                )
+              else if (_error != null && _parks.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(22, 20, 22, 8),
+                    child: Column(
+                      children: [
+                        Text(
+                          'We couldn’t load the park list. Check your connection and try again.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: _navy),
+                        ),
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          onPressed: _loadInitial,
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('Try again'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else if (_parks.isEmpty)
                 const SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.all(24),
                     child: Text(
                       'No parks are published yet. Please check back soon.',
                       textAlign: TextAlign.center,
+                      style: TextStyle(color: _navy),
                     ),
                   ),
                 ),
