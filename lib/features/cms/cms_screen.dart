@@ -850,6 +850,44 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   value: cfg['heroImageUrl']?.toString() ?? '',
                   onChanged: (v) => setState(() => cfg['heroImageUrl'] = v),
                 ),
+                const SizedBox(height: 20),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Explore the Park card images',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Upload a photo for each home screen card. Save changes to publish them for this park.',
+                    style: TextStyle(color: wonderlaNavy, fontSize: 13),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                for (final (key, label) in const <(String, String)>[
+                  ('exploreParkMapImageUrl', 'Park map'),
+                  ('exploreRidesImageUrl', 'Rides & events'),
+                  ('exploreDiningImageUrl', 'Dining & menu'),
+                  ('exploreWaitTimesImageUrl', 'Live wait times'),
+                  ('exploreGuidelinesImageUrl', 'Ride guidelines'),
+                  ('exploreWaveImageUrl', 'Wave pool & rain dance'),
+                  ('exploreSafetyImageUrl', 'Safety & hygiene'),
+                  ('exploreMaintenanceImageUrl', 'Maintenance log'),
+                ]) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _ImagePickerField(
+                      api: widget.api,
+                      parkSlug: _selectedSlug!,
+                      label: label,
+                      value: cfg[key]?.toString() ?? '',
+                      onChanged: (v) => setState(() => cfg[key] = v),
+                    ),
+                  ),
+                ],
                 if (_super)
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
@@ -1481,10 +1519,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: wonderlaNavy,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: wonderlaNavy, fontSize: 12),
                   ),
                 ],
               ),
@@ -1580,9 +1615,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             Expanded(
               child: Text(
                 message,
-                style: TextStyle(
-                  color: error ? wonderlaFlagRed : wonderlaNavy,
-                ),
+                style: TextStyle(color: error ? wonderlaFlagRed : wonderlaNavy),
               ),
             ),
             if (retry != null)
@@ -1934,10 +1967,7 @@ class _ImagePickerFieldState extends State<_ImagePickerField> {
                         : widget.value,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: wonderlaNavy,
-                      fontSize: 11,
-                    ),
+                    style: const TextStyle(color: wonderlaNavy, fontSize: 11),
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(

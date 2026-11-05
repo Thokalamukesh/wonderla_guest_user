@@ -25,15 +25,55 @@ class _VisitorHomeState extends State<VisitorHome> {
   bool _loading = true;
   String? _error;
 
-  static const _tiles = <(String, String, IconData)>[
-    ('PARK MAP', 'Find rides & facilities', LucideIcons.mapPinned),
-    ('RIDES & EVENTS', 'Explore rides and shows', LucideIcons.ferrisWheel),
-    ('DINING & MENU', 'Food, menus & prices', LucideIcons.utensils),
-    ('LIVE WAIT TIMES', 'Current ride queues', LucideIcons.timer),
-    ('RIDE GUIDELINES', 'Height limits & rules', LucideIcons.ruler),
-    ('WAVE POOL & RAIN DANCE', 'Sessions & timings', LucideIcons.waves),
-    ('SAFETY & HYGIENE', 'Plan a safe visit', LucideIcons.shieldCheck),
-    ('MAINTENANCE LOG', 'Ride service updates', LucideIcons.wrench),
+  static const _tiles = <(String, String, IconData, String)>[
+    (
+      'PARK MAP',
+      'Find rides & facilities',
+      LucideIcons.mapPinned,
+      'exploreParkMapImageUrl',
+    ),
+    (
+      'RIDES & EVENTS',
+      'Explore rides and shows',
+      LucideIcons.ferrisWheel,
+      'exploreRidesImageUrl',
+    ),
+    (
+      'DINING & MENU',
+      'Food, menus & prices',
+      LucideIcons.utensils,
+      'exploreDiningImageUrl',
+    ),
+    (
+      'LIVE WAIT TIMES',
+      'Current ride queues',
+      LucideIcons.timer,
+      'exploreWaitTimesImageUrl',
+    ),
+    (
+      'RIDE GUIDELINES',
+      'Height limits & rules',
+      LucideIcons.ruler,
+      'exploreGuidelinesImageUrl',
+    ),
+    (
+      'WAVE POOL & RAIN DANCE',
+      'Sessions & timings',
+      LucideIcons.waves,
+      'exploreWaveImageUrl',
+    ),
+    (
+      'SAFETY & HYGIENE',
+      'Plan a safe visit',
+      LucideIcons.shieldCheck,
+      'exploreSafetyImageUrl',
+    ),
+    (
+      'MAINTENANCE LOG',
+      'Ride service updates',
+      LucideIcons.wrench,
+      'exploreMaintenanceImageUrl',
+    ),
   ];
 
   @override
@@ -212,10 +252,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Choose what you want to discover.',
-                            style: TextStyle(
-                              color: wonderlaNavy,
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(color: wonderlaNavy, fontSize: 16),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -243,6 +280,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                             title: tile.$1,
                             subtitle: tile.$2,
                             icon: tile.$3,
+                            imageUrl: _imageUrl(cfg[tile.$4]?.toString()),
                             delay: i * 55,
                             compact: compact,
                             onTap: () => _openSection(tile.$1),
@@ -323,10 +361,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                       const Text(
                         'Open your park guide for rides, dining and more.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: wonderlaNavy,
-                          fontSize: 15,
-                        ),
+                        style: TextStyle(color: wonderlaNavy, fontSize: 15),
                       ),
                     ],
                   ),
@@ -595,11 +630,13 @@ class _ExploreTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
+    required this.imageUrl,
     required this.delay,
     required this.compact,
     required this.onTap,
   });
   final String title, subtitle;
+  final String imageUrl;
   final IconData icon;
   final int delay;
   final bool compact;
@@ -632,18 +669,34 @@ class _ExploreTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: compact ? 42 : 60,
-                height: compact ? 42 : 60,
-                decoration: BoxDecoration(
-                  color: wonderlaCobalt,
-                  borderRadius: BorderRadius.circular(compact ? 14 : 18),
-                ),
-                child: Icon(
-                  icon,
-                  color: wonderlaWhite,
-                  size: compact ? 22 : 29,
-                  opticalSize: compact ? 22 : 29,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(compact ? 14 : 18),
+                child: SizedBox(
+                  width: compact ? 52 : 68,
+                  height: compact ? 62 : 76,
+                  child: imageUrl.isEmpty
+                      ? Container(
+                          color: const Color(0xffe9efff),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            icon,
+                            color: wonderlaCobalt,
+                            size: compact ? 25 : 30,
+                          ),
+                        )
+                      : Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            color: const Color(0xffe9efff),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              icon,
+                              color: wonderlaCobalt,
+                              size: compact ? 25 : 30,
+                            ),
+                          ),
+                        ),
                 ),
               ),
               SizedBox(width: compact ? 8 : 13),
@@ -656,10 +709,11 @@ class _ExploreTile extends StatelessWidget {
                       title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: _navy,
-                        fontSize: 14,
+                        fontSize: compact ? 13 : 15,
                         fontWeight: FontWeight.w900,
+                        letterSpacing: -.35,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1123,10 +1177,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                       for (final t in List<String>.from(
                         item['timeSlot'] as List? ?? [],
                       ))
-                        Chip(
-                          label: Text(t),
-                          backgroundColor: wonderlaWhite,
-                        ),
+                        Chip(label: Text(t), backgroundColor: wonderlaWhite),
                     ],
                   ),
                 ],
@@ -1261,10 +1312,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                 const SizedBox(height: 6),
                 Text(
                   item['description']?.toString() ?? '',
-                  style: const TextStyle(
-                    color: wonderlaNavy,
-                    height: 1.35,
-                  ),
+                  style: const TextStyle(color: wonderlaNavy, height: 1.35),
                 ),
                 const SizedBox(height: 7),
                 _tags(item['tags']),

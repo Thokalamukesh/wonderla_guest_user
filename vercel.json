@@ -6,6 +6,10 @@
       "destination": "https://wonderla-qr-project.vercel.app/qr-code/api/:path*"
     },
     {
+      "source": "/uploads/:path*",
+      "destination": "https://wonderla-qr-project.vercel.app/uploads/:path*"
+    },
+    {
       "source": "/qr-code/:park",
       "destination": "/"
     },
