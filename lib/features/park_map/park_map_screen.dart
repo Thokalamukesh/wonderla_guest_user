@@ -25,9 +25,9 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
     wonderlaBengaluruLatitude,
     wonderlaBengaluruLongitude,
   );
-  static const _green = wonderlaCobalt;
+  static const _navy = wonderlaNavy;
   static const _ink = wonderlaNavy;
-  static const _wonderlaYellow = wonderlaCobalt;
+  static const _selectedPinFill = wonderlaCream;
 
   final _map = MapController();
   final _search = TextEditingController();
@@ -391,7 +391,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: wonderlaWhite,
+      backgroundColor: wonderlaCream,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -452,7 +452,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                   Polyline(
                     points: _route!.points,
                     strokeWidth: 6,
-                    color: wonderlaCobalt,
+                    color: wonderlaNavy,
                     borderStrokeWidth: 2,
                     borderColor: Colors.white,
                   ),
@@ -582,7 +582,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
         hintText: 'Search rides, food, facilities…',
-        prefixIcon: const Icon(Icons.search_rounded, color: _green),
+        prefixIcon: const Icon(Icons.search_rounded, color: _navy),
         suffixIcon: _searching
             ? const Padding(
                 padding: EdgeInsets.all(14),
@@ -600,7 +600,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                   IconButton(
                     tooltip: 'Search nearby locations',
                     onPressed: () => _submitSearch(_search.text),
-                    icon: const Icon(Icons.search_rounded, color: _green),
+                    icon: const Icon(Icons.search_rounded, color: _navy),
                   ),
                   IconButton(
                     tooltip: 'Clear search',
@@ -641,7 +641,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
               height: 20,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : Icon(icon, color: _green),
+          : Icon(icon, color: _navy),
     ),
   );
 
@@ -670,7 +670,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                 IconButton(
                   tooltip: 'Clear selected destination',
                   onPressed: _clearDestination,
-                  icon: const Icon(Icons.close_rounded, color: _green),
+                  icon: const Icon(Icons.close_rounded, color: _navy),
                 )
               else if (_loadingPlaces)
                 const SizedBox(
@@ -682,7 +682,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                 IconButton(
                   tooltip: 'Refresh park locations',
                   onPressed: _loadParkPlaces,
-                  icon: const Icon(Icons.refresh_rounded, color: _green),
+                  icon: const Icon(Icons.refresh_rounded, color: _navy),
                 ),
             ],
           ),
@@ -724,11 +724,11 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
         avatar: Icon(
           icon,
           size: 19,
-          color: selected ? _wonderlaYellow : _green,
+          color: selected ? _selectedPinFill : _navy,
         ),
         label: Text(label),
         showCheckmark: false,
-        selectedColor: _green,
+        selectedColor: _navy,
         backgroundColor: Colors.white,
         labelStyle: TextStyle(
           color: selected ? Colors.white : _ink,
@@ -747,7 +747,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: _green),
+            CircularProgressIndicator(color: _navy),
             SizedBox(height: 12),
             Text(
               'Loading locations inside the park…',
@@ -774,7 +774,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: _green),
+            CircularProgressIndicator(color: _navy),
             SizedBox(height: 10),
             Text(
               'Searching nearby locations…',
@@ -892,7 +892,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                   color: wonderlaWhite,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(place.icon, color: _green, size: 26),
+                child: Icon(place.icon, color: _navy, size: 26),
               ),
               const SizedBox(width: 11),
               Expanded(
@@ -930,7 +930,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.directions_rounded, color: _green),
+                    : const Icon(Icons.directions_rounded, color: _navy),
               ),
             ],
           ),
@@ -951,14 +951,14 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.directions_walk_rounded, color: _green, size: 19),
+            const Icon(Icons.directions_walk_rounded, color: _navy, size: 19),
             const SizedBox(width: 8),
             Text(
               '${_distanceLabel(_route!.distanceMeters)}  ·  ${(_route!.durationSeconds / 60).ceil()} min',
               style: const TextStyle(fontWeight: FontWeight.w700, color: _ink),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.chevron_right_rounded, color: _green),
+            const Icon(Icons.chevron_right_rounded, color: _navy),
           ],
         ),
       ),
@@ -998,7 +998,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
                         child: Text(
                           '${index + 1}',
                           style: const TextStyle(
-                            color: _green,
+                            color: _navy,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -1083,21 +1083,21 @@ class _PlacePin extends StatelessWidget {
           height: selected ? 44 : 40,
           decoration: BoxDecoration(
             color: selected
-                ? _ParkMapScreenState._green
-                : _ParkMapScreenState._wonderlaYellow,
+                ? _ParkMapScreenState._navy
+                : _ParkMapScreenState._selectedPinFill,
             shape: BoxShape.circle,
-            border: Border.all(color: _ParkMapScreenState._green, width: 2),
+            border: Border.all(color: _ParkMapScreenState._navy, width: 2),
             boxShadow: const [BoxShadow(color: Color(0x42071a3d), blurRadius: 5)],
           ),
           child: Icon(
             place.icon,
             size: 22,
             color: selected
-                ? _ParkMapScreenState._wonderlaYellow
-                : _ParkMapScreenState._green,
+                ? _ParkMapScreenState._selectedPinFill
+                : _ParkMapScreenState._navy,
           ),
         ),
-        Container(width: 3, height: 13, color: _ParkMapScreenState._green),
+        Container(width: 3, height: 13, color: _ParkMapScreenState._navy),
       ],
     ),
   );

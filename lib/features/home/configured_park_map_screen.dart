@@ -8,9 +8,9 @@ import '../park_map/services/location_service.dart';
 import '../park_map/services/open_street_map_service.dart';
 import '../../shared/wonderla_palette.dart';
 
-const _mapBlue = wonderlaCobalt;
+const _mapNavy = wonderlaNavy;
 const _mapInk = wonderlaNavy;
-const _mapCanvas = wonderlaWhite;
+const _mapCanvas = wonderlaCream;
 
 /// Park specific map. It uses the visitor GPS position as the initial focus,
 /// then displays only the coordinates managed for this park in the CMS.
@@ -212,7 +212,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     return Scaffold(
       backgroundColor: _mapCanvas,
       appBar: AppBar(
-        backgroundColor: _mapBlue,
+        backgroundColor: _mapNavy,
         foregroundColor: Colors.white,
         title: Text(
           '${widget.config['name'] ?? 'Park'} map',
@@ -276,7 +276,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
             ),
           ),
           if (_routing)
-            const LinearProgressIndicator(color: _mapBlue, minHeight: 3),
+            const LinearProgressIndicator(color: _mapNavy, minHeight: 3),
           if (_selected != null) _placeInfo(_selected!),
           if (_route != null) _directionsPanel(_route!),
           _placeTray(places),
@@ -309,7 +309,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
             polylines: [
               Polyline(
                 points: route.points,
-                color: wonderlaCobalt,
+                color: wonderlaNavy,
                 strokeWidth: 7,
                 borderColor: Colors.white,
                 borderStrokeWidth: 2,
@@ -333,7 +333,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
                 height: 28,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: wonderlaCobalt,
+                    color: wonderlaNavy,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 4),
                     boxShadow: const [
@@ -365,7 +365,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
             width: selected ? 38 : 34,
             height: selected ? 38 : 34,
             decoration: BoxDecoration(
-              color: selected ? wonderlaCobalt : _mapBlue,
+              color: selected ? wonderlaCream : _mapNavy,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
               boxShadow: const [
@@ -378,7 +378,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
               size: 18,
             ),
           ),
-          const Icon(Icons.arrow_drop_down, color: _mapBlue, size: 18),
+          const Icon(Icons.arrow_drop_down, color: _mapNavy, size: 18),
         ],
       ),
     );
@@ -440,7 +440,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
-            color: selected ? wonderlaCobalt : _mapBlue,
+            color: selected ? wonderlaCream : _mapNavy,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: const [
@@ -494,7 +494,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: ActionChip(
-                    avatar: const Icon(Icons.place, color: _mapBlue, size: 18),
+                    avatar: const Icon(Icons.place, color: _mapNavy, size: 18),
                     label: Text(place['name']?.toString() ?? ''),
                     onPressed: () => _focusPlace(place),
                   ),
@@ -514,7 +514,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         hintText: 'Search rides, shops, restaurants…',
-        prefixIcon: const Icon(Icons.search_rounded, color: _mapBlue),
+        prefixIcon: const Icon(Icons.search_rounded, color: _mapNavy),
         suffixIcon: _searchController.text.isEmpty
             ? null
             : IconButton(
@@ -534,11 +534,11 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(17),
-          borderSide: const BorderSide(color: wonderlaCobalt),
+          borderSide: const BorderSide(color: wonderlaNavy),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(17),
-          borderSide: const BorderSide(color: _mapBlue, width: 1.5),
+          borderSide: const BorderSide(color: _mapNavy, width: 1.5),
         ),
       ),
     ),
@@ -580,7 +580,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
                     backgroundColor: wonderlaWhite,
                     child: Icon(
                       _placeIcon(place['category']?.toString()),
-                      color: _mapBlue,
+                      color: _mapNavy,
                       size: 19,
                     ),
                   ),
@@ -594,7 +594,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
                   subtitle: Text(place['category']?.toString() ?? 'Park place'),
                   trailing: const Icon(
                     Icons.directions_walk_rounded,
-                    color: _mapBlue,
+                    color: _mapNavy,
                   ),
                   onTap: () {
                     FocusManager.instance.primaryFocus?.unfocus();
@@ -632,7 +632,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.directions_walk_rounded, color: _mapBlue),
+              const Icon(Icons.directions_walk_rounded, color: _mapNavy),
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
@@ -667,7 +667,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
                   child: Text(
                     '${index + 1}',
                     style: const TextStyle(
-                      color: _mapBlue,
+                      color: _mapNavy,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),
@@ -725,7 +725,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
     decoration: BoxDecoration(
-      color: _mapBlue,
+      color: _mapNavy,
       borderRadius: BorderRadius.circular(15),
     ),
     child: Row(
@@ -790,7 +790,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.location_searching, color: _mapBlue, size: 44),
+            const Icon(Icons.location_searching, color: _mapNavy, size: 44),
             const SizedBox(height: 10),
             Text(
               _gpsLoading

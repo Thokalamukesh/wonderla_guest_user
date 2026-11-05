@@ -8,7 +8,7 @@ import 'cms_api.dart';
 import '../../shared/scroll_reveal.dart';
 import '../../shared/wonderla_palette.dart';
 
-const _brandBlue = wonderlaCobalt;
+const _brandNavy = wonderlaNavy;
 const _ink = wonderlaNavy;
 
 class CmsScreen extends StatefulWidget {
@@ -47,7 +47,7 @@ class _CmsScreenState extends State<CmsScreen> {
   Widget build(BuildContext context) {
     if (_checking) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: _brandBlue)),
+        body: Center(child: CircularProgressIndicator(color: _brandNavy)),
       );
     }
     if (_user == null) {
@@ -131,7 +131,7 @@ class _LoginPageState extends State<_LoginPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: wonderlaWhite,
+    backgroundColor: wonderlaCream,
     body: Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -237,7 +237,7 @@ class _LoginPageState extends State<_LoginPage> {
                     FilledButton(
                       onPressed: _busy ? null : _submit,
                       style: FilledButton.styleFrom(
-                        backgroundColor: _brandBlue,
+                        backgroundColor: _brandNavy,
                         minimumSize: const Size.fromHeight(50),
                       ),
                       child: _busy
@@ -450,7 +450,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 980;
     return Scaffold(
-      backgroundColor: wonderlaWhite,
+      backgroundColor: wonderlaCream,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -525,7 +525,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                 ),
                 child: const Icon(
                   Icons.dashboard_customize_outlined,
-                  color: _brandBlue,
+                  color: _brandNavy,
                 ),
               ),
               const SizedBox(width: 11),
@@ -596,7 +596,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         ListTile(
           leading: const CircleAvatar(
             backgroundColor: wonderlaWhite,
-            child: Icon(Icons.person_outline, color: _brandBlue),
+            child: Icon(Icons.person_outline, color: _brandNavy),
           ),
           title: Text(
             '${widget.user['username']}',
@@ -651,7 +651,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     child: ListTile(
       selected: _section == title,
       selectedColor: wonderlaWhite,
-      selectedTileColor: _brandBlue,
+      selectedTileColor: _brandNavy,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       leading: Icon(icon, size: 20),
       title: Text(
@@ -695,7 +695,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   ),
                 ),
                 selected: _section == title,
-                selectedColor: _brandBlue,
+                selectedColor: _brandNavy,
                 backgroundColor: wonderlaWhite,
                 side: const BorderSide(color: _ink),
                 onSelected: (_) => _changeSection(title),
@@ -707,7 +707,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
 
   Widget _body() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: _brandBlue));
+      return const Center(child: CircularProgressIndicator(color: _brandNavy));
     }
     if (_error != null) return _feedback(_error!, error: true, retry: _loadAll);
     return ListView(
@@ -792,7 +792,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.edit_note, color: _brandBlue),
+                    const Icon(Icons.edit_note, color: _brandNavy),
                     const SizedBox(width: 8),
                     const Text(
                       'Park details',
@@ -877,7 +877,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: Icon(_iconFor(entry.key), color: _brandBlue),
+              leading: Icon(_iconFor(entry.key), color: _brandNavy),
               title: Text(entry.key),
               trailing: Text(
                 '${(_config![entry.value] as List?)?.length ?? 0} items',
@@ -906,7 +906,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: wonderlaWhite,
-              child: const Icon(Icons.park_outlined, color: _brandBlue),
+              child: const Icon(Icons.park_outlined, color: _brandNavy),
             ),
             title: Text(p['name']?.toString() ?? ''),
             subtitle: Text('${p['location'] ?? ''} · /qr-code/${p['slug']}'),
@@ -977,7 +977,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   IconButton(
                     tooltip: 'Edit',
                     onPressed: () => _editItem(key, i),
-                    icon: const Icon(Icons.edit_outlined, color: _brandBlue),
+                    icon: const Icon(Icons.edit_outlined, color: _brandNavy),
                   ),
                   IconButton(
                     tooltip: 'Delete',
@@ -1093,7 +1093,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
           Card(
             color: Colors.white,
             child: ListTile(
-              leading: const Icon(Icons.place_outlined, color: _brandBlue),
+              leading: const Icon(Icons.place_outlined, color: _brandNavy),
               title: Text(places[i]['name']?.toString() ?? 'Untitled place'),
               subtitle: Text(
                 '${places[i]['category'] ?? 'Place'} · x ${places[i]['x'] ?? 0}% · y ${places[i]['y'] ?? 0}%',
@@ -1215,7 +1215,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             SelectableText(
               url,
               style: const TextStyle(
-                color: _brandBlue,
+                color: _brandNavy,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -1482,7 +1482,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             ),
             IconButton(
               onPressed: add,
-              icon: const Icon(Icons.add_circle_outline, color: _brandBlue),
+              icon: const Icon(Icons.add_circle_outline, color: _brandNavy),
             ),
           ],
         ),
@@ -1507,11 +1507,11 @@ class _AdminDashboardState extends State<_AdminDashboard> {
       active ? 'Active' : 'Inactive',
       style: TextStyle(
         fontSize: 11,
-        color: active ? wonderlaCobalt : wonderlaNavy,
+        color: active ? wonderlaNavy : wonderlaNavy,
         fontWeight: FontWeight.w700,
       ),
     ),
-    backgroundColor: active ? wonderlaCobalt : wonderlaWhite,
+    backgroundColor: active ? wonderlaNavy : wonderlaWhite,
     side: const BorderSide(color: wonderlaNavy),
     visualDensity: VisualDensity.compact,
   );
@@ -1524,7 +1524,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     ),
     clipBehavior: Clip.antiAlias,
     child: url == null || url.isEmpty
-        ? const Icon(Icons.image_outlined, color: _brandBlue)
+        ? const Icon(Icons.image_outlined, color: _brandNavy)
         : Image.network(
             _absoluteImage(url),
             fit: BoxFit.cover,
@@ -1565,14 +1565,14 @@ class _AdminDashboardState extends State<_AdminDashboard> {
           children: [
             Icon(
               error ? Icons.error_outline : Icons.check_circle_outline,
-              color: error ? wonderlaNavy : wonderlaCobalt,
+              color: error ? wonderlaNavy : wonderlaNavy,
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 message,
                 style: TextStyle(
-                  color: error ? wonderlaNavy : wonderlaCobalt,
+                  color: error ? wonderlaNavy : wonderlaNavy,
                 ),
               ),
             ),
@@ -1879,7 +1879,7 @@ class _ImagePickerFieldState extends State<_ImagePickerField> {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: wonderlaWhite,
-          border: Border.all(color: wonderlaCobalt),
+          border: Border.all(color: wonderlaNavy),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -1897,7 +1897,7 @@ class _ImagePickerFieldState extends State<_ImagePickerField> {
                   : widget.value.isEmpty
                   ? const Icon(
                       Icons.add_photo_alternate_outlined,
-                      color: _brandBlue,
+                      color: _brandNavy,
                       size: 28,
                     )
                   : Image.network(
@@ -2064,7 +2064,7 @@ class _ApiKeyCardState extends State<_ApiKeyCard> {
             child: Text(_saving ? 'Saving…' : 'Save key'),
           ),
           if (_message != null)
-            Text(_message!, style: const TextStyle(color: wonderlaCobalt)),
+            Text(_message!, style: const TextStyle(color: wonderlaNavy)),
           if (_error != null)
             Text(_error!, style: const TextStyle(color: wonderlaNavy)),
           const SizedBox(height: 12),
@@ -2302,7 +2302,7 @@ class _EmptyCard extends StatelessWidget {
       padding: const EdgeInsets.all(28),
       child: Column(
         children: [
-          const Icon(Icons.inbox_outlined, size: 38, color: _brandBlue),
+          const Icon(Icons.inbox_outlined, size: 38, color: _brandNavy),
           const SizedBox(height: 10),
           Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),

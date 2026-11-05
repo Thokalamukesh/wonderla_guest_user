@@ -8,9 +8,8 @@ import '../../shared/scroll_reveal.dart';
 import '../../shared/wonderla_palette.dart';
 
 const _navy = wonderlaNavy;
-const _blue = wonderlaCobalt;
-const _pale = wonderlaWhite;
-const _white = Colors.white;
+const _pale = wonderlaCream;
+const _white = wonderlaWhite;
 
 class VisitorHome extends StatefulWidget {
   const VisitorHome({super.key, this.initialPark});
@@ -138,7 +137,7 @@ class _VisitorHomeState extends State<VisitorHome> {
     if (_loading) {
       return const Scaffold(
         backgroundColor: _pale,
-        body: Center(child: CircularProgressIndicator(color: _blue)),
+        body: Center(child: CircularProgressIndicator(color: _navy)),
       );
     }
     if (_error != null) {
@@ -180,7 +179,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                                 onPressed: _showParkPicker,
                                 icon: const Icon(
                                   Icons.location_on_outlined,
-                                  color: _blue,
+                                  color: _navy,
                                 ),
                               ),
                           ],
@@ -304,7 +303,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                       const Text(
                         'YOUR DAY STARTS HERE',
                         style: TextStyle(
-                          color: _blue,
+                          color: _navy,
                           letterSpacing: 2,
                           fontWeight: FontWeight.w800,
                           fontSize: 12,
@@ -345,7 +344,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                       clipBehavior: Clip.antiAlias,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
-                        side: const BorderSide(color: wonderlaCobalt),
+                        side: const BorderSide(color: wonderlaNavy),
                       ),
                       child: InkWell(
                         onTap: () => _loadPark(p['slug'] as String),
@@ -363,7 +362,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                             ),
                             child: const Icon(
                               Icons.park_outlined,
-                              color: _blue,
+                              color: _navy,
                             ),
                           ),
                           title: Text(
@@ -376,7 +375,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                           subtitle: Text(p['location']?.toString() ?? ''),
                           trailing: const Icon(
                             Icons.chevron_right,
-                            color: _blue,
+                            color: _navy,
                           ),
                         ),
                       ),
@@ -433,7 +432,7 @@ class _VisitorHomeState extends State<VisitorHome> {
             ),
             for (final p in _parks)
               ListTile(
-                leading: const Icon(Icons.location_on_outlined, color: _blue),
+                leading: const Icon(Icons.location_on_outlined, color: _navy),
                 title: Text(p['name']?.toString() ?? ''),
                 subtitle: Text(p['location']?.toString() ?? ''),
                 onTap: () => Navigator.pop(ctx, p['slug'] as String),
@@ -588,7 +587,7 @@ class _ExploreTile extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(compact ? 10 : 15),
           decoration: BoxDecoration(
-            border: const Border(left: BorderSide(color: _blue, width: 5)),
+            border: const Border(left: BorderSide(color: _navy, width: 5)),
             borderRadius: BorderRadius.circular(24),
             boxShadow: const [
               BoxShadow(
@@ -604,7 +603,7 @@ class _ExploreTile extends StatelessWidget {
                 width: compact ? 42 : 60,
                 height: compact ? 42 : 60,
                 decoration: BoxDecoration(
-                  color: wonderlaCobalt,
+                  color: wonderlaNavy,
                   borderRadius: BorderRadius.circular(compact ? 14 : 18),
                 ),
                 child: Icon(
@@ -712,9 +711,9 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: _pale,
     appBar: AppBar(
-      backgroundColor: _blue,
+      backgroundColor: _navy,
       foregroundColor: Colors.white,
-      surfaceTintColor: _blue,
+      surfaceTintColor: _navy,
       toolbarHeight: 82,
       title: Text(
         widget.title,
@@ -739,7 +738,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
         padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
         children: [
           if (_error != null) _notice(_error!, error: true),
-          if (_loading) const LinearProgressIndicator(color: _blue),
+          if (_loading) const LinearProgressIndicator(color: _navy),
           ..._content().asMap().entries.map(
             (entry) => ScrollReveal(
               key: ValueKey('${widget.title}-${entry.key}'),
@@ -781,7 +780,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: _rideTab == tab ? _blue : Colors.transparent,
+                    color: _rideTab == tab ? _navy : Colors.transparent,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Text(
@@ -851,7 +850,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                       Text(
                         'EXPLORE MORE  ›',
                         style: TextStyle(
-                          color: _blue,
+                          color: _navy,
                           fontWeight: FontWeight.w900,
                           letterSpacing: .3,
                         ),
@@ -897,7 +896,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
                       decoration: const BoxDecoration(
-                        color: _blue,
+                        color: _navy,
                         borderRadius: BorderRadius.vertical(
                           bottom: Radius.circular(25),
                         ),
@@ -1051,10 +1050,10 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
   Color _waitColor(dynamic value) {
     final n = num.tryParse('$value') ?? 0;
     return n >= 25
-        ? wonderlaCobalt
+        ? wonderlaNavy
         : n >= 10
-        ? _blue
-        : wonderlaCobalt;
+        ? _navy
+        : wonderlaNavy;
   }
 
   List<Widget> _guidelines() => [
@@ -1121,7 +1120,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
       child: Column(
         children: [
           Container(
-            color: _blue,
+            color: _navy,
             padding: const EdgeInsets.all(14),
             child: const Row(
               children: [
@@ -1209,7 +1208,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: _blue,
+                      color: _navy,
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Text(
@@ -1266,7 +1265,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
           color: wonderlaWhite,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Icon(icon, color: _blue, size: 32),
+        child: Icon(icon, color: _navy, size: 32),
       ),
       title: Text(
         title.toUpperCase(),
@@ -1284,7 +1283,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
           ? null
           : Text(
               trailing,
-              style: const TextStyle(color: _blue, fontWeight: FontWeight.w900),
+              style: const TextStyle(color: _navy, fontWeight: FontWeight.w900),
             ),
     ),
   );
@@ -1297,12 +1296,12 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
       borderRadius: BorderRadius.circular(17),
     ),
     child: path == null || path.isEmpty
-        ? const Icon(Icons.local_activity_outlined, color: _blue, size: 29)
+        ? const Icon(Icons.local_activity_outlined, color: _navy, size: 29)
         : Image.network(
             _url(path),
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) =>
-                const Icon(Icons.local_activity_outlined, color: _blue),
+                const Icon(Icons.local_activity_outlined, color: _navy),
           ),
   );
   Widget _wideImage(String? path) => path == null || path.isEmpty
@@ -1347,7 +1346,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
     padding: const EdgeInsets.all(26),
     child: Column(
       children: [
-        const Icon(Icons.inbox_outlined, color: _blue, size: 34),
+        const Icon(Icons.inbox_outlined, color: _navy, size: 34),
         const SizedBox(height: 8),
         Text(
           '$title will be available soon.',
@@ -1365,7 +1364,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
     ),
     child: Text(
       message,
-      style: TextStyle(color: error ? wonderlaNavy : wonderlaCobalt),
+      style: TextStyle(color: error ? wonderlaNavy : wonderlaNavy),
     ),
   );
 }
@@ -1379,11 +1378,11 @@ class _BookingCallout extends StatelessWidget {
     decoration: BoxDecoration(
       color: wonderlaWhite,
       borderRadius: BorderRadius.circular(15),
-      border: Border.all(color: wonderlaCobalt),
+      border: Border.all(color: wonderlaNavy),
     ),
     child: const Row(
       children: [
-        Icon(Icons.confirmation_number_outlined, color: _blue),
+        Icon(Icons.confirmation_number_outlined, color: _navy),
         SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -1407,7 +1406,7 @@ class _LoadError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.cloud_off_outlined, color: _blue, size: 42),
+          const Icon(Icons.cloud_off_outlined, color: _navy, size: 42),
           const SizedBox(height: 12),
           const Text(
             'Park guide could not load',
