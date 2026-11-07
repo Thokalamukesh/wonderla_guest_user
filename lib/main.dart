@@ -13,6 +13,15 @@ class WonderlaApp extends StatelessWidget {
     title: 'Wonderla Park Guide',
     debugShowCheckedModeBanner: false,
     theme: buildWonderlaTheme(),
+    builder: (context, child) => DefaultTextStyle.merge(
+      style: const TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 15,
+        height: 1.45,
+        letterSpacing: 0.03,
+      ),
+      child: child ?? const SizedBox.shrink(),
+    ),
     home: const VisitorHome(),
   );
 }
