@@ -381,7 +381,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                       clipBehavior: Clip.antiAlias,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
-                        side: const BorderSide(color: wonderlaNavy),
+                        side: const BorderSide(color: wonderlaBorder),
                       ),
                       child: InkWell(
                         onTap: () => _loadPark(p['slug'] as String),
@@ -582,14 +582,14 @@ class _HeroCard extends StatelessWidget {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: wonderlaFlagRed,
-                  border: Border.all(color: wonderlaFlagRed),
+                  color: wonderlaGold,
+                  border: Border.all(color: wonderlaGold),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: const Text(
                   'THE FUN STARTS HERE',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: wonderlaNavy,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 2,
                     fontSize: 11,
@@ -658,7 +658,7 @@ class _ExploreTile extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(compact ? 8 : 13),
           decoration: BoxDecoration(
-            border: Border.all(color: wonderlaCobalt, width: 1.2),
+            border: Border.all(color: wonderlaBorder),
             borderRadius: BorderRadius.circular(24),
             boxShadow: const [
               BoxShadow(
@@ -799,10 +799,10 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: _pale,
     appBar: AppBar(
-      backgroundColor: wonderlaCobalt,
-      foregroundColor: Colors.white,
-      surfaceTintColor: wonderlaCobalt,
-      toolbarHeight: 82,
+      backgroundColor: wonderlaWhite,
+      foregroundColor: wonderlaNavy,
+      surfaceTintColor: wonderlaWhite,
+      toolbarHeight: 68,
       title: Text(
         widget.title,
         style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900),

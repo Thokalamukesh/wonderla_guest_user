@@ -365,7 +365,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
             width: selected ? 38 : 34,
             height: selected ? 38 : 34,
             decoration: BoxDecoration(
-              color: selected ? wonderlaFlagRed : _mapNavy,
+              color: selected ? wonderlaGold : _mapNavy,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
               boxShadow: const [
@@ -374,7 +374,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
             ),
             child: Icon(
               _placeIcon(place['category']?.toString()),
-              color: Colors.white,
+              color: selected ? wonderlaNavy : Colors.white,
               size: 18,
             ),
           ),
@@ -440,7 +440,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
-            color: selected ? wonderlaFlagRed : _mapNavy,
+            color: selected ? wonderlaGold : _mapNavy,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: const [
@@ -449,7 +449,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           ),
           child: Icon(
             _placeIcon(place['category']?.toString()),
-            color: Colors.white,
+            color: selected ? wonderlaNavy : Colors.white,
             size: 17,
           ),
         ),

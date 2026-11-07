@@ -12,22 +12,7 @@ class WonderlaApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'Wonderla Park Guide',
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      useMaterial3: true,
-      scaffoldBackgroundColor: wonderlaCream,
-      colorScheme: const ColorScheme.light(
-        primary: wonderlaCobalt,
-        onPrimary: wonderlaWhite,
-        secondary: wonderlaFlagRed,
-        onSecondary: wonderlaWhite,
-        surface: wonderlaWhite,
-        onSurface: wonderlaNavy,
-        error: wonderlaFlagRed,
-        onError: wonderlaWhite,
-      ),
-      iconTheme: const IconThemeData(color: wonderlaCobalt),
-      fontFamily: 'Roboto',
-    ),
+    theme: buildWonderlaTheme(),
     home: const VisitorHome(),
   );
 }

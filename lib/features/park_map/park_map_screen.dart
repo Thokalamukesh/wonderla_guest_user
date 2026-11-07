@@ -27,7 +27,7 @@ class _ParkMapScreenState extends State<ParkMapScreen> {
   );
   static const _navy = wonderlaCobalt;
   static const _ink = wonderlaNavy;
-  static const _selectedPinFill = wonderlaFlagRed;
+  static const _selectedPinFill = wonderlaGold;
 
   final _map = MapController();
   final _search = TextEditingController();
@@ -1092,7 +1092,7 @@ class _PlacePin extends StatelessWidget {
           child: Icon(
             place.icon,
             size: 22,
-            color: Colors.white,
+            color: selected ? wonderlaNavy : Colors.white,
           ),
         ),
         Container(width: 3, height: 13, color: _ParkMapScreenState._navy),
