@@ -375,6 +375,11 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   String? _notice;
 
   bool get _super => widget.user['role'] == 'superadmin';
+  bool get _canSave =>
+      _config != null &&
+      _section != 'Users' &&
+      _section != 'Google Maps settings' &&
+      _section != 'Site URL & QR codes';
 
   @override
   void initState() {
@@ -449,35 +454,40 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 980;
+    final compact = MediaQuery.sizeOf(context).width < 720;
+    final narrow = MediaQuery.sizeOf(context).width < 390;
     return Scaffold(
       backgroundColor: wonderlaCream,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
+        toolbarHeight: 64,
         title: Row(
           children: [
             Image.asset(
               'assets/images/wonderla_logo.webp',
-              width: 118,
+              width: narrow ? 96 : 118,
               height: 42,
               fit: BoxFit.contain,
             ),
-            const SizedBox(width: 10),
-            const Text(
-              'Admin',
-              style: TextStyle(color: _ink, fontWeight: FontWeight.w800),
-            ),
+            if (!narrow) ...[
+              const SizedBox(width: 10),
+              const Text(
+                'Admin',
+                style: TextStyle(color: _ink, fontWeight: FontWeight.w800),
+              ),
+            ],
           ],
         ),
         actions: [
-          if (_config != null &&
-              _section != 'Users' &&
-              _section != 'Google Maps settings' &&
-              _section != 'Site URL & QR codes')
-            TextButton.icon(
-              onPressed: _saving ? null : _savePark,
-              icon: const Icon(Icons.save_outlined),
-              label: Text(_saving ? 'Saving…' : 'Save changes'),
+          if (_canSave && !compact)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: FilledButton.icon(
+                onPressed: _saving ? null : _savePark,
+                icon: const Icon(Icons.save_outlined),
+                label: Text(_saving ? 'Saving…' : 'Save changes'),
+              ),
             ),
           PopupMenuButton<String>(
             onSelected: (_) => widget.onLogout(),
@@ -490,6 +500,31 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             icon: const Icon(Icons.account_circle_outlined),
           ),
         ],
+        bottom: _canSave && compact
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(68),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _saving ? null : _savePark,
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.save_outlined),
+                      label: Text(_saving ? 'Saving…' : 'Save changes'),
+                    ),
+                  ),
+                ),
+              )
+            : null,
       ),
       drawer: wide ? null : Drawer(child: _nav()),
       body: Row(
