@@ -214,15 +214,6 @@ class _VisitorHomeState extends State<VisitorHome> {
                               fit: BoxFit.contain,
                             ),
                             const Spacer(),
-                            if (_parks.length > 1)
-                              IconButton(
-                                tooltip: 'Change park',
-                                onPressed: _showParkPicker,
-                                icon: const Icon(
-                                  Icons.location_on_outlined,
-                                  color: _navy,
-                                ),
-                              ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -521,108 +512,128 @@ class _HeroCard extends StatelessWidget {
   });
   final String name, location, imageUrl;
   @override
-  Widget build(BuildContext context) => Container(
-    height: 260,
-    width: double.infinity,
-    clipBehavior: Clip.antiAlias,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(30),
-      color: wonderlaNavy,
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x22071a3d),
-          blurRadius: 23,
-          offset: Offset(0, 12),
-        ),
-      ],
-    ),
-    child: Stack(
-      fit: StackFit.expand,
-      children: [
-        if (imageUrl.isNotEmpty)
-          Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const SizedBox(),
-          ),
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x10071a3d), Color(0xaa071a3d)],
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final compact = constraints.maxWidth < 560;
+      final cardHeight = compact ? 178.0 : 205.0;
+      return Container(
+        height: cardHeight,
+        width: double.infinity,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(26),
+          color: wonderlaNavy,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x22071a3d),
+              blurRadius: 20,
+              offset: Offset(0, 9),
             ),
-          ),
+          ],
         ),
-        Positioned(
-          right: 28,
-          top: 20,
-          child: Container(
-            width: 112,
-            height: 112,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: .22),
-                width: 18,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imageUrl.isNotEmpty)
+              Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const SizedBox(),
+              ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x10071a3d), Color(0xaa071a3d)],
+                ),
               ),
             ),
-          ),
-        ),
-        Positioned(
-          left: 25,
-          right: 20,
-          bottom: 27,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
-                ),
+            Positioned(
+              right: compact ? 18 : 28,
+              top: compact ? 12 : 18,
+              child: Container(
+                width: compact ? 76 : 100,
+                height: compact ? 76 : 100,
                 decoration: BoxDecoration(
-                  color: wonderlaGold,
-                  border: Border.all(color: wonderlaGold),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Text(
-                  'THE FUN STARTS HERE',
-                  style: TextStyle(
-                    color: wonderlaNavy,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 2,
-                    fontSize: 11,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: .22),
+                    width: compact ? 12 : 16,
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
-              Text(
-                'WELCOME TO\n${name.toUpperCase()}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  height: 1.02,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -1,
-                ),
+            ),
+            Positioned(
+              left: compact ? 18 : 25,
+              right: 16,
+              bottom: compact ? 15 : 20,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: wonderlaGold,
+                      border: Border.all(color: wonderlaGold),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Text(
+                      'THE FUN STARTS HERE',
+                      style: TextStyle(
+                        color: wonderlaNavy,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 2,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: compact ? 8 : 11),
+                  Text(
+                    'WELCOME TO\n${name.toUpperCase()}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      height: 1.02,
+                      fontSize: compact ? 24 : 29,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_rounded,
+                        color: wonderlaGold,
+                        size: 15,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          location,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: wonderlaWhite,
+                            fontSize: compact ? 13 : 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 9),
-              Text(
-                '📍 $location',
-                style: const TextStyle(
-                  color: wonderlaWhite,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
-    ),
+      );
+    },
   );
 }
 
