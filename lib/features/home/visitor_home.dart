@@ -229,13 +229,13 @@ class _VisitorHomeState extends State<VisitorHome> {
                         const Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            'EXPLORE THE PARK',
+                            'Explore Wonderla',
                             style: TextStyle(
                               color: _navy,
-                              fontSize: 27,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -1.1,
-                              height: .98,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -.65,
+                              height: 1.08,
                             ),
                           ),
                         ),
@@ -244,7 +244,12 @@ class _VisitorHomeState extends State<VisitorHome> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Choose what you want to discover.',
-                            style: TextStyle(color: wonderlaNavy, fontSize: 16),
+                            style: TextStyle(
+                              color: wonderlaMuted,
+                              fontSize: 15,
+                              height: 1.4,
+                              letterSpacing: .05,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -290,15 +295,14 @@ class _VisitorHomeState extends State<VisitorHome> {
                         const Expanded(
                           child: Text(
                             'Have a Wonder-ful day!',
-                            style: TextStyle(color: wonderlaNavy),
+                            style: TextStyle(
+                              color: wonderlaMuted,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: .1,
+                            ),
                           ),
                         ),
-                        if (_parks.length > 1)
-                          TextButton.icon(
-                            onPressed: _showParkPicker,
-                            icon: const Icon(Icons.place_outlined, size: 18),
-                            label: const Text('Change park'),
-                          ),
                       ],
                     ),
                   ),
@@ -474,34 +478,6 @@ class _VisitorHomeState extends State<VisitorHome> {
       ),
     ),
   );
-
-  Future<void> _showParkPicker() async {
-    final slug = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            const ListTile(
-              title: Text(
-                'Choose your park',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-            for (final p in _parks)
-              ListTile(
-                leading: const Icon(Icons.location_on_outlined, color: _navy),
-                title: Text(p['name']?.toString() ?? ''),
-                subtitle: Text(p['location']?.toString() ?? ''),
-                onTap: () => Navigator.pop(ctx, p['slug'] as String),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (slug != null && mounted) await _loadPark(slug);
-  }
 }
 
 class _HeroCard extends StatelessWidget {
@@ -600,8 +576,8 @@ class _HeroCard extends StatelessWidget {
                       color: Colors.white,
                       height: 1.02,
                       fontSize: compact ? 24 : 29,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -1,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -.65,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -718,14 +694,21 @@ class _ExploreTile extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      title,
+                      title
+                          .split(' ')
+                          .map(
+                            (word) => word == '&' || word.isEmpty
+                                ? word
+                                : '${word[0]}${word.substring(1).toLowerCase()}',
+                          )
+                          .join(' '),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: _navy,
-                        fontSize: compact ? 13 : 15,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -.35,
+                        fontSize: compact ? 14 : 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -.15,
                       ),
                     ),
                     SizedBox(height: compact ? 3 : 6),
@@ -736,7 +719,8 @@ class _ExploreTile extends StatelessWidget {
                       style: TextStyle(
                         color: wonderlaNavy,
                         fontSize: compact ? 12 : 14,
-                        height: 1.2,
+                        height: 1.3,
+                        letterSpacing: .05,
                       ),
                     ),
                   ],
