@@ -117,23 +117,12 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     return null;
   }
 
-  bool get _hasSavedCenter {
-    final lat = double.tryParse('${_map['centerLat']}');
-    final lng = double.tryParse('${_map['centerLng']}');
-    return lat != null &&
-        lng != null &&
-        lat >= -90 &&
-        lat <= 90 &&
-        lng >= -180 &&
-        lng <= 180;
-  }
-
   @override
   void initState() {
     super.initState();
     _center = _configuredCenter;
     _showLayout =
-        !_hasSavedCenter && _imageUrl(_map['img']?.toString()).isNotEmpty;
+        _center == null && _imageUrl(_map['img']?.toString()).isNotEmpty;
     _locateVisitor();
   }
 

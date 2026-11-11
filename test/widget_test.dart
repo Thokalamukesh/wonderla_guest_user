@@ -6,6 +6,7 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:maps_wonderla_flutter/features/home/visitor_home.dart';
@@ -43,5 +44,6 @@ void main() {
     expect(find.text('1 place available'), findsOneWidget);
     expect(find.text('Wonderla Demo map'), findsNothing);
     expect(find.text('Map coordinates are needed'), findsNothing);
+    expect(find.byType(FlutterMap), findsOneWidget);
   });
 }
