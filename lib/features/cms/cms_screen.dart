@@ -11,6 +11,19 @@ import '../../shared/wonderla_palette.dart';
 const _brandNavy = wonderlaCobalt;
 const _ink = wonderlaNavy;
 
+bool _hasValidMapCoordinates(Map<String, dynamic> place) {
+  final latitude = double.tryParse('${place['lat']}');
+  final longitude = double.tryParse('${place['lng']}');
+  return latitude != null &&
+      longitude != null &&
+      latitude.isFinite &&
+      longitude.isFinite &&
+      latitude >= -90 &&
+      latitude <= 90 &&
+      longitude >= -180 &&
+      longitude <= 180;
+}
+
 class CmsScreen extends StatefulWidget {
   const CmsScreen({super.key});
   @override
@@ -1169,18 +1182,26 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         ),
         _subsectionHeader(
           'Map places',
-          'Add visitor destinations with percent position and optional coordinates.',
+          'Pin destinations on the map. Add GPS coordinates to enable walking directions from a visitor’s live location.',
           () => _editMapPlace(map, null),
         ),
         for (var i = 0; i < places.length; i++)
           Card(
             color: Colors.white,
             child: ListTile(
-              leading: const Icon(Icons.place_outlined, color: _brandNavy),
+              leading: Icon(
+                _hasValidMapCoordinates(places[i])
+                    ? Icons.directions_walk
+                    : Icons.place_outlined,
+                color: _hasValidMapCoordinates(places[i])
+                    ? Colors.green.shade700
+                    : _brandNavy,
+              ),
               title: Text(places[i]['name']?.toString() ?? 'Untitled place'),
               subtitle: Text(
-                '${places[i]['category'] ?? 'Place'} · x ${places[i]['x'] ?? 0}% · y ${places[i]['y'] ?? 0}%',
+                '${places[i]['category'] ?? 'Place'} · x ${places[i]['x'] ?? 0}% · y ${places[i]['y'] ?? 0}%\n${_hasValidMapCoordinates(places[i]) ? 'Walking directions ready' : 'Add latitude and longitude for directions'}',
               ),
+              isThreeLine: true,
               trailing: Wrap(
                 children: [
                   IconButton(
@@ -1419,8 +1440,8 @@ class _AdminDashboardState extends State<_AdminDashboard> {
           ('category', 'Category'),
           ('x', 'Horizontal position %'),
           ('y', 'Vertical position %'),
-          ('lat', 'Latitude (optional)'),
-          ('lng', 'Longitude (optional)'),
+          ('lat', 'Latitude'),
+          ('lng', 'Longitude'),
           ('avatarImage', 'Place icon image'),
         ],
         api: widget.api,
@@ -1685,6 +1706,109 @@ class _RecordEditorState extends State<_RecordEditor> {
     widget.values,
   );
   final _controllers = <String, TextEditingController>{};
+  String? _coordinateError;
+
+  bool get _isMapPlaceEditor =>
+      widget.schema.any((field) => field.$1 == 'lat') &&
+      widget.schema.any((field) => field.$1 == 'lng');
+
+  Widget _coordinatesEditor() => Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF3F6FA),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: const Color(0xFFE1E7EF)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Enable walking directions',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'In Google Maps, long-press the destination and copy its coordinates. Enter both values, or leave both blank if directions are not needed.',
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final fields = [
+              ('lat', 'Latitude', 'e.g. 12.8343'),
+              ('lng', 'Longitude', 'e.g. 77.4010'),
+            ];
+            final children = fields
+                .map(
+                  (field) => TextField(
+                    controller: _controllers[field.$1],
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                      signed: true,
+                    ),
+                    onChanged: (_) => setState(() => _coordinateError = null),
+                    decoration: InputDecoration(
+                      labelText: field.$2,
+                      hintText: field.$3,
+                      border: const OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                )
+                .toList();
+            if (constraints.maxWidth < 420) {
+              return Column(
+                children: [
+                  children[0],
+                  const SizedBox(height: 10),
+                  children[1],
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: children[0]),
+                const SizedBox(width: 10),
+                Expanded(child: children[1]),
+              ],
+            );
+          },
+        ),
+        if (_coordinateError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _coordinateError!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ],
+      ],
+    ),
+  );
+
+  bool _validateCoordinates() {
+    final latitudeText = _controllers['lat']?.text.trim() ?? '';
+    final longitudeText = _controllers['lng']?.text.trim() ?? '';
+    String? error;
+    if (latitudeText.isEmpty != longitudeText.isEmpty) {
+      error = 'Enter both latitude and longitude.';
+    } else if (latitudeText.isNotEmpty) {
+      final latitude = double.tryParse(latitudeText);
+      final longitude = double.tryParse(longitudeText);
+      if (latitude == null ||
+          longitude == null ||
+          !latitude.isFinite ||
+          !longitude.isFinite) {
+        error = 'Enter valid numeric coordinates.';
+      } else if (latitude < -90 || latitude > 90) {
+        error = 'Latitude must be between −90 and 90.';
+      } else if (longitude < -180 || longitude > 180) {
+        error = 'Longitude must be between −180 and 180.';
+      }
+    }
+    setState(() => _coordinateError = error);
+    return error == null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1719,8 +1843,11 @@ class _RecordEditorState extends State<_RecordEditor> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (_isMapPlaceEditor) _coordinatesEditor(),
             for (final (key, label) in widget.schema)
-              if (key == 'img' || key == 'avatarImage')
+              if (_isMapPlaceEditor && (key == 'lat' || key == 'lng'))
+                const SizedBox.shrink()
+              else if (key == 'img' || key == 'avatarImage')
                 Padding(
                   padding: const EdgeInsets.only(bottom: 14),
                   child: _ImagePickerField(
@@ -1779,6 +1906,7 @@ class _RecordEditorState extends State<_RecordEditor> {
       ),
       FilledButton(
         onPressed: () {
+          if (_isMapPlaceEditor && !_validateCoordinates()) return;
           for (final (key, _) in widget.schema) {
             final c = _controllers[key];
             if (c == null) continue;
