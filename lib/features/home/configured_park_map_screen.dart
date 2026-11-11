@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../park_map/park_map_screen.dart';
@@ -33,6 +36,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   final _location = LocationService();
   final _routingService = OpenStreetMapService();
   final _searchController = TextEditingController();
+  StreamSubscription<Position>? _positionSubscription;
   LatLng? _center;
   LatLng? _visitorPosition;
   Map<String, dynamic>? _selected;
@@ -98,6 +102,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
 
   @override
   void dispose() {
+    _positionSubscription?.cancel();
     _searchController.dispose();
     _routingService.dispose();
     super.dispose();
@@ -119,6 +124,22 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       if (position != null) {
         _visitorPosition = LatLng(position.latitude, position.longitude);
         _center = _visitorPosition;
+        _positionSubscription ??= _location.watchPosition().listen(
+          (position) {
+            if (!mounted) return;
+            setState(() {
+              _visitorPosition = LatLng(position.latitude, position.longitude);
+              _locationMessage = null;
+            });
+          },
+          onError: (_) {
+            if (mounted) {
+              setState(
+                () => _locationMessage = 'Live location updates stopped.',
+              );
+            }
+          },
+        );
       }
     });
     if (position != null && _mapReady) {
@@ -136,19 +157,6 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     });
     if (position != null && _mapReady) _controller.move(position, 18);
     _requestDirections(place);
-  }
-
-  List<Map<String, dynamic>> get _searchResults {
-    final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return const [];
-    return _places
-        .where((place) {
-          final name = place['name']?.toString().toLowerCase() ?? '';
-          final category = place['category']?.toString().toLowerCase() ?? '';
-          return name.contains(query) || category.contains(query);
-        })
-        .take(6)
-        .toList(growable: false);
   }
 
   Future<void> _requestDirections(Map<String, dynamic> place) async {
@@ -262,24 +270,41 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         children: [
           if (_locationMessage != null && !_gpsLoading) _locationBanner(),
           _searchBox(),
-          if (_searchController.text.trim().isNotEmpty) _searchSuggestions(),
           if (_routeError != null) _routeNotice(_routeError!),
+          if (_routing)
+            const LinearProgressIndicator(color: _mapNavy, minHeight: 3),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: _showLayout
-                    ? _layoutMap(image, places)
-                    : _liveMap(places),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final map = ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: _showLayout
+                        ? _layoutMap(image, places)
+                        : _liveMap(places),
+                  );
+                  final locations = _placeTray(places);
+                  if (constraints.maxWidth >= 760) {
+                    return Row(
+                      children: [
+                        Expanded(flex: 11, child: map),
+                        const SizedBox(width: 12),
+                        Expanded(flex: 9, child: locations),
+                      ],
+                    );
+                  }
+                  return Column(
+                    children: [
+                      Expanded(child: map),
+                      const SizedBox(height: 10),
+                      Expanded(child: locations),
+                    ],
+                  );
+                },
               ),
             ),
           ),
-          if (_routing)
-            const LinearProgressIndicator(color: _mapNavy, minHeight: 3),
-          if (_selected != null) _placeInfo(_selected!),
-          if (_route != null) _directionsPanel(_route!),
-          _placeTray(places),
         ],
       ),
     );
@@ -329,18 +354,9 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
             if (_visitorPosition case final point?)
               Marker(
                 point: point,
-                width: 28,
-                height: 28,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: wonderlaNavy,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x44071a3d), blurRadius: 8),
-                    ],
-                  ),
-                ),
+                width: 40,
+                height: 40,
+                child: _userLocationMarker(),
               ),
           ],
         ),
@@ -383,6 +399,30 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       ),
     );
   }
+
+  Widget _userLocationMarker() => Stack(
+    alignment: Alignment.center,
+    children: [
+      Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: _mapNavy.withValues(alpha: .2),
+          shape: BoxShape.circle,
+        ),
+      ),
+      Container(
+        width: 18,
+        height: 18,
+        decoration: BoxDecoration(
+          color: wonderlaBlue,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 3),
+          boxShadow: const [BoxShadow(color: Color(0x44071a3d), blurRadius: 7)],
+        ),
+      ),
+    ],
+  );
 
   IconData _placeIcon(String? category) {
     final value = (category ?? '').toLowerCase();
@@ -457,54 +497,227 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     );
   }
 
-  Widget _placeTray(List<Map<String, dynamic>> places) => Container(
-    height: 124,
-    color: Colors.white,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(15, 10, 15, 2),
+  Widget _placeTray(List<Map<String, dynamic>> places) {
+    final query = _searchController.text.trim().toLowerCase();
+    final visiblePlaces = query.isEmpty
+        ? places
+        : places
+              .where((place) {
+                final name = place['name']?.toString().toLowerCase() ?? '';
+                final category =
+                    place['category']?.toString().toLowerCase() ?? '';
+                return name.contains(query) || category.contains(query);
+              })
+              .toList(growable: false);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: wonderlaBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12071a3d),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 14, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        query.isEmpty ? 'Explore this park' : 'Search results',
+                        style: const TextStyle(
+                          color: _mapInk,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${visiblePlaces.length} ${visiblePlaces.length == 1 ? 'place' : 'places'} available',
+                        style: const TextStyle(
+                          color: wonderlaMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _locationStatus(),
+              ],
+            ),
+          ),
+          if (_selected != null) _placeInfo(_selected!),
+          Expanded(
+            child: _route != null
+                ? _directionsPanel(_route!)
+                : visiblePlaces.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        query.isEmpty
+                            ? 'No park locations are available yet.'
+                            : 'No places match “${_searchController.text.trim()}”.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: wonderlaMuted),
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+                    itemCount: visiblePlaces.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 4),
+                    itemBuilder: (context, index) =>
+                        _placeListRow(visiblePlaces[index]),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _locationStatus() {
+    final live = _visitorPosition != null;
+    final color = _gpsLoading
+        ? wonderlaWarning
+        : live
+        ? wonderlaSuccess
+        : wonderlaMuted;
+    final label = _gpsLoading
+        ? 'Locating'
+        : live
+        ? 'Live GPS'
+        : 'GPS off';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: .09),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_gpsLoading)
+            SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(strokeWidth: 2, color: color),
+            )
+          else
+            Icon(Icons.my_location_rounded, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _placeListRow(Map<String, dynamic> place) {
+    final selected = _selected?['name'] == place['name'];
+    final distance = _distanceToVisitor(place);
+    return Material(
+      color: selected ? const Color(0xfff2f6ff) : Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: () => _focusPlace(place),
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           child: Row(
             children: [
-              const Expanded(
-                child: Text(
-                  'PLACES IN THIS PARK',
-                  style: TextStyle(
-                    color: _mapInk,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: .5,
-                  ),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: wonderlaCream,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  _placeIcon(place['category']?.toString()),
+                  color: _mapNavy,
+                  size: 21,
                 ),
               ),
-              if (_gpsLoading)
-                const Text(
-                  'Finding you…',
-                  style: TextStyle(color: wonderlaNavy, fontSize: 12),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      place['name']?.toString() ?? 'Park place',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _mapInk,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      [
+                        place['category']?.toString() ?? 'Park place',
+                        ?distance,
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: wonderlaMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_routing && selected)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Icon(
+                  Icons.directions_walk_rounded,
+                  color: selected ? _mapNavy : wonderlaMuted,
+                  size: 20,
                 ),
             ],
           ),
         ),
-        Expanded(
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            children: [
-              for (final place in places)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: ActionChip(
-                    avatar: const Icon(Icons.place, color: _mapNavy, size: 18),
-                    label: Text(place['name']?.toString() ?? ''),
-                    onPressed: () => _focusPlace(place),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
+
+  String? _distanceToVisitor(Map<String, dynamic> place) {
+    final from = _visitorPosition;
+    final to = _placePosition(place);
+    if (from == null || to == null) return null;
+    final meters = Geolocator.distanceBetween(
+      from.latitude,
+      from.longitude,
+      to.latitude,
+      to.longitude,
+    );
+    return '${_formatDistance(meters)} away';
+  }
 
   Widget _searchBox() => Padding(
     padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
@@ -544,102 +757,24 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     ),
   );
 
-  Widget _searchSuggestions() {
-    final results = _searchResults;
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 190),
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1a071a3d),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: results.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.all(14),
-              child: Text(
-                'No matching places in this park yet.',
-                style: TextStyle(color: wonderlaNavy),
-              ),
-            )
-          : ListView.separated(
-              shrinkWrap: true,
-              itemCount: results.length,
-              separatorBuilder: (_, _) => const Divider(height: 1, indent: 52),
-              itemBuilder: (context, index) {
-                final place = results[index];
-                return ListTile(
-                  dense: true,
-                  leading: CircleAvatar(
-                    backgroundColor: wonderlaWhite,
-                    child: Icon(
-                      _placeIcon(place['category']?.toString()),
-                      color: _mapNavy,
-                      size: 19,
-                    ),
-                  ),
-                  title: Text(
-                    place['name']?.toString() ?? '',
-                    style: const TextStyle(
-                      color: _mapInk,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  subtitle: Text(place['category']?.toString() ?? 'Park place'),
-                  trailing: const Icon(
-                    Icons.directions_walk_rounded,
-                    color: _mapNavy,
-                  ),
-                  onTap: () {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                    _focusPlace(place);
-                  },
-                );
-              },
-            ),
-    );
-  }
-
   Widget _directionsPanel(WalkingRoute route) {
-    final distance = route.distanceMeters >= 1000
-        ? '${(route.distanceMeters / 1000).toStringAsFixed(1)} km'
-        : '${route.distanceMeters.round()} m';
+    final distance = _formatDistance(route.distanceMeters);
     final minutes = (route.durationSeconds / 60).ceil();
-    return Container(
-      height: 170,
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      padding: const EdgeInsets.fromLTRB(14, 8, 8, 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14071a3d),
-            blurRadius: 9,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 2, 0, 8),
+          child: Row(
             children: [
               const Icon(Icons.directions_walk_rounded, color: _mapNavy),
-              const SizedBox(width: 7),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '$distance  ·  about $minutes min walk',
+                  '$distance · about $minutes min walk',
                   style: const TextStyle(
                     color: _mapInk,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -654,38 +789,34 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
               ),
             ],
           ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: route.steps.length,
-              itemBuilder: (context, index) => ListTile(
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(
-                  radius: 13,
-                  backgroundColor: wonderlaWhite,
-                  child: Text(
-                    '${index + 1}',
-                    style: const TextStyle(
-                      color: _mapNavy,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                title: Text(
-                  route.steps[index].instruction,
-                  style: const TextStyle(fontSize: 13, color: _mapInk),
-                ),
-                trailing: Text(
-                  _formatDistance(route.steps[index].distanceMeters),
-                  style: const TextStyle(fontSize: 11, color: wonderlaNavy),
+        ),
+        for (var index = 0; index < route.steps.length; index++)
+          ListTile(
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 2),
+            leading: CircleAvatar(
+              radius: 14,
+              backgroundColor: wonderlaCream,
+              child: Text(
+                '${index + 1}',
+                style: const TextStyle(
+                  color: _mapNavy,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
+            title: Text(
+              route.steps[index].instruction,
+              style: const TextStyle(fontSize: 13, color: _mapInk),
+            ),
+            trailing: Text(
+              _formatDistance(route.steps[index].distanceMeters),
+              style: const TextStyle(fontSize: 11, color: wonderlaMuted),
+            ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
