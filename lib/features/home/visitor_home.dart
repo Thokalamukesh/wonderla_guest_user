@@ -905,66 +905,181 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
     ];
   }
 
-  List<Widget> _dining() => [
-    for (final outlet in _list('dining'))
-      Card(
-        color: Colors.white,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        child: InkWell(
-          onTap: () => _diningDetail(outlet),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _thumb(outlet['img']?.toString(), size: 112),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${outlet['name'] ?? 'Dining'}'.toUpperCase(),
-                        style: const TextStyle(
-                          color: _navy,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        outlet['description']?.toString() ??
-                            outlet['cuisine']?.toString() ??
-                            '',
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: wonderlaNavy,
-                          height: 1.35,
-                        ),
-                      ),
-                      const SizedBox(height: 7),
-                      _tags(outlet['tags']),
-                      Text(
-                        'EXPLORE MORE  ›',
-                        style: TextStyle(
-                          color: _navy,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: .3,
-                        ),
-                      ),
-                    ],
+  List<Widget> _dining() {
+    final outlets = _list('dining');
+    return [
+      Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [wonderlaNavy, wonderlaCobalt],
+          ),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .14),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.restaurant_rounded, color: Colors.white),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'A GOOD DAY NEEDS GOOD FOOD',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: .35,
+                      fontSize: 16,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    '${outlets.length} ${outlets.length == 1 ? 'place' : 'places'} to eat around the park',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: .82),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      if (outlets.isEmpty) _empty('Dining options'),
+      for (final outlet in outlets)
+        Card(
+          color: Colors.white,
+          margin: const EdgeInsets.only(bottom: 13),
+          clipBehavior: Clip.antiAlias,
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+            side: const BorderSide(color: wonderlaBorder),
+          ),
+          child: InkWell(
+            onTap: () => _diningDetail(outlet),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: SizedBox(
+                      width: 112,
+                      height: 124,
+                      child: outlet['img']?.toString().isNotEmpty == true
+                          ? Image.network(
+                              _url(outlet['img']?.toString()),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => _diningImageFallback(),
+                            )
+                          : _diningImageFallback(),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if ((outlet['cuisine']?.toString() ?? '').isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: wonderlaWhite,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              outlet['cuisine'].toString(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: wonderlaNavy,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                        Text(
+                          outlet['name']?.toString() ?? 'Dining',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: _navy,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          outlet['description']?.toString() ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: wonderlaNavy,
+                            height: 1.3,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        const Row(
+                          children: [
+                            Text(
+                              'VIEW MENU',
+                              style: TextStyle(
+                                color: wonderlaCobalt,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .6,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              color: wonderlaCobalt,
+                              size: 15,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-  ];
+    ];
+  }
 
+  Widget _diningImageFallback() => Container(
+    color: wonderlaWhite,
+    alignment: Alignment.center,
+    child: const Icon(
+      Icons.restaurant_rounded,
+      color: wonderlaCobalt,
+      size: 32,
+    ),
+  );
   Future<void> _diningDetail(Map<String, dynamic> outlet) async {
+    _menuFilter = 'All';
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -988,7 +1103,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                 .toList();
             return SafeArea(
               child: FractionallySizedBox(
-                heightFactor: .91,
+                heightFactor: .94,
                 child: Column(
                   children: [
                     Container(
@@ -1029,10 +1144,10 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                     ),
                     const SizedBox(height: 17),
                     Text(
-                      'EXPLORE MENU',
+                      'MENU',
                       style: TextStyle(
                         color: _navy,
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -1044,6 +1159,14 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                           ChoiceChip(
                             label: Text(f),
                             selected: _menuFilter == f,
+                            showCheckmark: false,
+                            selectedColor: wonderlaNavy,
+                            labelStyle: TextStyle(
+                              color: _menuFilter == f
+                                  ? Colors.white
+                                  : wonderlaNavy,
+                              fontWeight: FontWeight.w700,
+                            ),
                             onSelected: (_) => localSet(() => _menuFilter = f),
                           ),
                       ],
@@ -1057,20 +1180,39 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                           for (final item in filtered)
                             Card(
                               color: Colors.white,
+                              margin: const EdgeInsets.only(bottom: 9),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(17),
+                                side: const BorderSide(color: wonderlaBorder),
+                              ),
                               child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 11,
+                                  vertical: 4,
+                                ),
+                                minLeadingWidth: 54,
                                 leading: _thumb(
                                   item['img']?.toString(),
-                                  size: 54,
+                                  size: 58,
                                 ),
                                 title: Text(
                                   item['name']?.toString() ?? '',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: _navy,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
                                 subtitle: Text(
-                                  item['veg'] == true ? '🟢 Veg' : '🔶 Non-Veg',
+                                  item['veg'] == true
+                                      ? 'Vegetarian'
+                                      : 'Non-vegetarian',
+                                  style: const TextStyle(
+                                    color: wonderlaNavy,
+                                    fontSize: 12,
+                                  ),
                                 ),
                                 trailing: Text(
                                   item['price']?.toString() ?? '',
