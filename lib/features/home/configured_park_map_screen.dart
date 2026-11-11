@@ -219,93 +219,150 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     final image = _imageUrl(_map['img']?.toString());
     return Scaffold(
       backgroundColor: _mapCanvas,
-      appBar: AppBar(
-        backgroundColor: _mapNavy,
-        foregroundColor: Colors.white,
-        title: Text(
-          '${widget.config['name'] ?? 'Park'} map',
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-        ),
-        actions: [
-          if (image.isNotEmpty)
-            IconButton(
-              tooltip: _showLayout ? 'Show live map' : 'Show park layout',
-              onPressed: () => setState(() => _showLayout = !_showLayout),
-              icon: Icon(
-                _showLayout ? Icons.map_outlined : Icons.image_outlined,
-              ),
-            ),
-          IconButton(
-            tooltip: _gpsLoading
-                ? 'Finding your location'
-                : 'Center on my location',
-            onPressed: _gpsLoading ? null : _locateVisitor,
-            icon: _gpsLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.my_location_rounded),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final map = _mapPanel(image, places);
+              final locations = _placeTray(places);
+              if (constraints.maxWidth >= 760) {
+                return Row(
+                  children: [
+                    Expanded(flex: 11, child: map),
+                    const SizedBox(width: 12),
+                    Expanded(flex: 9, child: locations),
+                  ],
+                );
+              }
+              return Column(
+                children: [
+                  Expanded(child: map),
+                  const SizedBox(height: 10),
+                  Expanded(child: locations),
+                ],
+              );
+            },
           ),
-          if (widget.config['slug'] == 'bengaluru')
-            IconButton(
-              tooltip: 'Open walking directions map',
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ParkMapScreen()),
-              ),
-              icon: const Icon(Icons.directions_walk_rounded),
-            ),
-        ],
+        ),
       ),
-      body: Column(
-        children: [
-          if (_locationMessage != null && !_gpsLoading) _locationBanner(),
-          _searchBox(),
-          if (_routeError != null) _routeNotice(_routeError!),
-          if (_routing)
-            const LinearProgressIndicator(color: _mapNavy, minHeight: 3),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final map = ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: _showLayout
-                        ? _layoutMap(image, places)
-                        : _liveMap(places),
-                  );
-                  final locations = _placeTray(places);
-                  if (constraints.maxWidth >= 760) {
-                    return Row(
-                      children: [
-                        Expanded(flex: 11, child: map),
-                        const SizedBox(width: 12),
-                        Expanded(flex: 9, child: locations),
-                      ],
-                    );
-                  }
-                  return Column(
-                    children: [
-                      Expanded(child: map),
-                      const SizedBox(height: 10),
-                      Expanded(child: locations),
-                    ],
-                  );
-                },
+    );
+  }
+
+  Widget _mapPanel(
+    String image,
+    List<Map<String, dynamic>> places,
+  ) => ClipRRect(
+    borderRadius: BorderRadius.circular(18),
+    child: Stack(
+      fit: StackFit.expand,
+      children: [
+        _showLayout ? _layoutMap(image, places) : _liveMap(places),
+        Positioned(top: 10, left: 10, right: 10, child: _searchBox()),
+        Positioned(
+          top: 76,
+          right: 12,
+          child: Column(
+            children: [
+              _mapAction(
+                Icons.my_location_rounded,
+                _locateVisitor,
+                tooltip: 'Center on my live location',
+                loading: _gpsLoading,
+              ),
+              if (image.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _mapAction(
+                  _showLayout ? Icons.map_rounded : Icons.image_outlined,
+                  () => setState(() => _showLayout = !_showLayout),
+                  tooltip: _showLayout ? 'Show live map' : 'Show park layout',
+                ),
+              ],
+              if (widget.config['slug'] == 'bengaluru') ...[
+                const SizedBox(height: 8),
+                _mapAction(
+                  Icons.directions_walk_rounded,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ParkMapScreen()),
+                  ),
+                  tooltip: 'Open walking directions map',
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (_routing)
+          const Positioned(
+            top: 70,
+            left: 12,
+            right: 12,
+            child: LinearProgressIndicator(color: _mapNavy, minHeight: 3),
+          ),
+        if (_routeError != null)
+          Positioned(
+            top: 70,
+            left: 0,
+            right: 0,
+            child: _routeNotice(_routeError!),
+          )
+        else if (_locationMessage != null && !_gpsLoading)
+          Positioned(top: 70, left: 0, right: 0, child: _locationBanner()),
+        if (_route != null)
+          Positioned(left: 12, bottom: 12, child: _routeSummary(_route!)),
+      ],
+    ),
+  );
+
+  Widget _mapAction(
+    IconData icon,
+    VoidCallback action, {
+    required String tooltip,
+    bool loading = false,
+  }) => Material(
+    color: Colors.white,
+    elevation: 4,
+    shape: const CircleBorder(),
+    child: IconButton(
+      tooltip: tooltip,
+      onPressed: loading ? null : action,
+      icon: loading
+          ? const SizedBox(
+              width: 19,
+              height: 19,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(icon, color: _mapNavy),
+    ),
+  );
+
+  Widget _routeSummary(WalkingRoute route) {
+    final distance = _formatDistance(route.distanceMeters);
+    final minutes = (route.durationSeconds / 60).ceil();
+    return Material(
+      color: Colors.white,
+      elevation: 4,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.directions_walk_rounded,
+              color: _mapNavy,
+              size: 18,
+            ),
+            const SizedBox(width: 7),
+            Text(
+              '$distance · about $minutes min',
+              style: const TextStyle(
+                color: _mapInk,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

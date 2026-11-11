@@ -39,6 +39,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Demo Ride'), findsOneWidget);
-    expect(find.text('Wonderla Demo map'), findsOneWidget);
+    expect(find.text('Explore this park'), findsOneWidget);
+    expect(find.text('1 place available'), findsOneWidget);
+    expect(find.text('Wonderla Demo map'), findsNothing);
   });
 }
