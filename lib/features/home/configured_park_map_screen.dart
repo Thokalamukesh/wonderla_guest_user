@@ -7,6 +7,8 @@ import 'package:latlong2/latlong.dart';
 
 import '../park_map/park_map_screen.dart';
 import '../park_map/models/map_place.dart';
+import '../park_map/models/park_map_config.dart';
+import '../park_map/models/wonderla_location_catalog.dart';
 import '../park_map/services/location_service.dart';
 import '../park_map/services/open_street_map_service.dart';
 import '../../shared/wonderla_palette.dart';
@@ -37,6 +39,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   final _routingService = OpenStreetMapService();
   final _searchController = TextEditingController();
   StreamSubscription<Position>? _positionSubscription;
+  Future<void>? _locationTask;
   LatLng? _center;
   LatLng? _visitorPosition;
   Map<String, dynamic>? _selected;
@@ -64,15 +67,30 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   LatLng? _placePosition(Map<String, dynamic> place) {
     final lat = double.tryParse('${place['lat']}');
     final lng = double.tryParse('${place['lng']}');
-    if (lat == null ||
-        lng == null ||
-        lat < -90 ||
-        lat > 90 ||
-        lng < -180 ||
-        lng > 180) {
-      return null;
+    if (lat != null &&
+        lng != null &&
+        lat >= -90 &&
+        lat <= 90 &&
+        lng >= -180 &&
+        lng <= 180) {
+      return LatLng(lat, lng);
     }
-    return LatLng(lat, lng);
+
+    // Reuse the verified Bengaluru OSM coordinates already shipped with the
+    // app for matching CMS labels that do not yet contain lat/lng fields.
+    if (widget.config['slug'] == 'bengaluru') {
+      final name = place['name']?.toString().trim().toLowerCase() ?? '';
+      for (final known in wonderlaFeaturedLocations) {
+        final knownName = known.name.toLowerCase();
+        if (name == knownName ||
+            knownName.startsWith('$name ') ||
+            (name.startsWith('wave pool') &&
+                knownName.startsWith('wave pool '))) {
+          return known.position;
+        }
+      }
+    }
+    return null;
   }
 
   LatLng? get _configuredCenter {
@@ -90,13 +108,32 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       final position = _placePosition(place);
       if (position != null) return position;
     }
+    if (widget.config['slug'] == 'bengaluru') {
+      return const LatLng(
+        wonderlaBengaluruLatitude,
+        wonderlaBengaluruLongitude,
+      );
+    }
     return null;
+  }
+
+  bool get _hasSavedCenter {
+    final lat = double.tryParse('${_map['centerLat']}');
+    final lng = double.tryParse('${_map['centerLng']}');
+    return lat != null &&
+        lng != null &&
+        lat >= -90 &&
+        lat <= 90 &&
+        lng >= -180 &&
+        lng <= 180;
   }
 
   @override
   void initState() {
     super.initState();
     _center = _configuredCenter;
+    _showLayout =
+        !_hasSavedCenter && _imageUrl(_map['img']?.toString()).isNotEmpty;
     _locateVisitor();
   }
 
@@ -108,7 +145,19 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     super.dispose();
   }
 
-  Future<void> _locateVisitor() async {
+  Future<void> _locateVisitor() {
+    final pending = _locationTask;
+    if (pending != null) return pending;
+
+    late final Future<void> task;
+    task = _fetchVisitorLocation().whenComplete(() {
+      if (identical(_locationTask, task)) _locationTask = null;
+    });
+    _locationTask = task;
+    return task;
+  }
+
+  Future<void> _fetchVisitorLocation() async {
     if (mounted) {
       setState(() {
         _gpsLoading = true;
@@ -124,6 +173,10 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       if (position != null) {
         _visitorPosition = LatLng(position.latitude, position.longitude);
         _center = _visitorPosition;
+        if (_showLayout) {
+          _showLayout = false;
+          _mapReady = false;
+        }
         _positionSubscription ??= _location.watchPosition().listen(
           (position) {
             if (!mounted) return;
@@ -153,9 +206,18 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       _selected = place;
       _route = null;
       _routeError = null;
-      _showLayout = false;
+      if (position != null && _showLayout) {
+        _showLayout = false;
+        _mapReady = false;
+      }
     });
-    if (position != null && _mapReady) _controller.move(position, 18);
+    if (position == null) {
+      setState(
+        () => _routeError = 'Walking directions are unavailable for this place yet. Add its latitude and longitude in the park map settings.',
+      );
+      return;
+    }
+    if (_mapReady) _controller.move(position, 18);
     _requestDirections(place);
   }
 
@@ -196,13 +258,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         _routing = false;
       });
       if (_mapReady && route.points.isNotEmpty) {
-        _controller.fitCamera(
-          CameraFit.coordinates(
-            coordinates: route.points,
-            padding: const EdgeInsets.fromLTRB(52, 80, 52, 72),
-            maxZoom: 18,
-          ),
-        );
+        _fitRoute(route);
       }
     } catch (error) {
       if (!mounted) return;
@@ -211,6 +267,17 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         _routeError = error.toString().replaceFirst('Exception: ', '');
       });
     }
+  }
+
+  void _fitRoute(WalkingRoute route) {
+    if (!_mapReady || route.points.isEmpty) return;
+    _controller.fitCamera(
+      CameraFit.coordinates(
+        coordinates: route.points,
+        padding: const EdgeInsets.fromLTRB(36, 112, 72, 56),
+        maxZoom: 18,
+      ),
+    );
   }
 
   @override
@@ -301,13 +368,13 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           ),
         if (_routeError != null)
           Positioned(
-            top: 70,
+            top: 82,
             left: 0,
-            right: 0,
+            right: 58,
             child: _routeNotice(_routeError!),
           )
         else if (_locationMessage != null && !_gpsLoading)
-          Positioned(top: 70, left: 0, right: 0, child: _locationBanner()),
+          Positioned(top: 82, left: 0, right: 58, child: _locationBanner()),
         if (_route != null)
           Positioned(left: 12, bottom: 12, child: _routeSummary(_route!)),
       ],
@@ -377,8 +444,12 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         initialZoom: 16,
         onMapReady: () {
           _mapReady = true;
-          final pos = _visitorPosition;
-          if (pos != null) _controller.move(pos, 17);
+          final route = _route;
+          if (route != null) {
+            _fitRoute(route);
+          } else if (_visitorPosition case final position?) {
+            _controller.move(position, 17);
+          }
         },
       ),
       children: [
@@ -391,8 +462,8 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
             polylines: [
               Polyline(
                 points: route.points,
-                color: wonderlaNavy,
-                strokeWidth: 7,
+                color: wonderlaBlue,
+                strokeWidth: 8,
                 borderColor: Colors.white,
                 borderStrokeWidth: 2,
               ),
@@ -532,7 +603,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       left: width * x / 100 - 16,
       top: height * y / 100 - 18,
       child: GestureDetector(
-        onTap: () => setState(() => _selected = place),
+        onTap: () => _focusPlace(place),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.all(7),
@@ -961,9 +1032,9 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            _center == null
-                ? 'Location unavailable. Add this park’s coordinates in CMS to show its map.'
-                : 'Showing the park map. ${_locationMessage ?? 'Turn on location to center the map on you.'}',
+            _visitorPosition == null
+                ? 'The park map is open. ${_locationMessage ?? 'Allow location access to show your live position and get directions.'}'
+                : _locationMessage ?? 'Live location is unavailable.',
             style: const TextStyle(color: wonderlaNavy, fontSize: 12),
           ),
         ),

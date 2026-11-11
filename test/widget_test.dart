@@ -18,7 +18,7 @@ void main() {
       MaterialApp(
         home: VisitorHome(
           initialPark: {
-            'slug': 'demo',
+            'slug': 'bengaluru',
             'name': 'Wonderla Demo',
             'location': 'Demo City',
             'active': true,
@@ -42,5 +42,6 @@ void main() {
     expect(find.text('Explore this park'), findsOneWidget);
     expect(find.text('1 place available'), findsOneWidget);
     expect(find.text('Wonderla Demo map'), findsNothing);
+    expect(find.text('Map coordinates are needed'), findsNothing);
   });
 }
