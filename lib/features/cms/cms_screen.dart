@@ -1729,7 +1729,7 @@ class _RecordEditorState extends State<_RecordEditor> {
         ),
         const SizedBox(height: 6),
         const Text(
-          'In Google Maps, long-press the destination and copy its coordinates. Enter both values, or leave both blank if directions are not needed.',
+          'In Google Maps, right-click the exact spot on desktop or long-press it on a phone, then copy the coordinate pair. Enter the first number as Latitude and the second as Longitude. Save this item, then save the map configuration.',
         ),
         const SizedBox(height: 12),
         LayoutBuilder(

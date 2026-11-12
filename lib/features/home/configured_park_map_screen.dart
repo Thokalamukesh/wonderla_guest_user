@@ -280,7 +280,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     });
     if (position == null) {
       setState(
-        () => _routeError = 'Walking directions are unavailable for this place yet. Add its latitude and longitude in the park map settings.',
+        () => _routeError = 'Add this place’s Latitude and Longitude in CMS Admin → Park map → Map places. Save the item and map configuration, then tap it again.',
       );
       return;
     }
