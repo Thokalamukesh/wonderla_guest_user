@@ -45,10 +45,12 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   LatLng? _visitorPosition;
   Map<String, dynamic>? _selected;
   WalkingRoute? _route;
+  RouteMode _routeMode = RouteMode.walking;
   bool _gpsLoading = false;
   bool _routing = false;
   bool _mapReady = false;
   bool _showLayout = false;
+  int _routeRequestId = 0;
   String? _locationMessage;
   String? _routeError;
 
@@ -189,8 +191,9 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           }
         },
         onError: (_) {
-          if (mounted)
+          if (mounted) {
             setState(() => _locationMessage = 'Live location updates stopped.');
+          }
         },
       );
     } else {
@@ -254,7 +257,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           _showLayout = false;
           _mapReady = false;
         }
-        if (_visitorPosition != null)
+        if (_visitorPosition != null) {
           _positionSubscription ??= _location.watchPosition().listen(
             (position) {
               if (!mounted) return;
@@ -279,6 +282,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
               }
             },
           );
+        }
       }
     });
     if (position != null &&
@@ -291,11 +295,13 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   }
 
   void _focusPlace(Map<String, dynamic> place) {
+    _routeRequestId++;
     final position = _placePosition(place);
     setState(() {
       _selected = place;
       _route = null;
       _routeError = null;
+      _routing = false;
       if (position != null && _showLayout) {
         _showLayout = false;
         _mapReady = false;
@@ -312,6 +318,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   }
 
   Future<void> _requestDirections(Map<String, dynamic> place) async {
+    final requestId = ++_routeRequestId;
     final destination = _placePosition(place);
     if (destination == null) {
       setState(
@@ -321,6 +328,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     }
     if (_visitorPosition == null || !_isNearPark(_visitorPosition!)) {
       await _locateVisitor();
+      if (!mounted || requestId != _routeRequestId) return;
       if (_visitorPosition == null) {
         if (mounted) {
           setState(
@@ -341,8 +349,9 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       final route = await _routingService.findWalkingRoute(
         from: _visitorPosition!,
         to: destination,
+        mode: _routeMode,
       );
-      if (!mounted) return;
+      if (!mounted || requestId != _routeRequestId) return;
       setState(() {
         _route = route;
         _routing = false;
@@ -351,7 +360,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         _fitRoute(route);
       }
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || requestId != _routeRequestId) return;
       setState(() {
         _routing = false;
         _routeError = error.toString().replaceFirst('Exception: ', '');
@@ -391,6 +400,26 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
+        actions: [
+          PopupMenuButton<RouteMode>(
+            tooltip: 'Travel mode',
+            initialValue: _routeMode,
+            onSelected: (mode) {
+              setState(() => _routeMode = mode);
+              final selected = _selected;
+              if (selected != null) _requestDirections(selected);
+            },
+            icon: Icon(
+              _routeMode == RouteMode.walking
+                  ? Icons.directions_walk_rounded
+                  : Icons.directions_car_rounded,
+            ),
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: RouteMode.walking, child: Text('Walking')),
+              PopupMenuItem(value: RouteMode.driving, child: Text('Driving')),
+            ],
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -1005,11 +1034,16 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           padding: const EdgeInsets.fromLTRB(4, 2, 0, 8),
           child: Row(
             children: [
-              const Icon(Icons.directions_walk_rounded, color: _mapNavy),
+              Icon(
+                route.mode == RouteMode.walking
+                    ? Icons.directions_walk_rounded
+                    : Icons.directions_car_rounded,
+                color: _mapNavy,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '$distance · about $minutes min walk',
+                  '$distance · about $minutes min ${route.mode == RouteMode.walking ? 'walk' : 'drive'}',
                   style: const TextStyle(
                     color: _mapInk,
                     fontWeight: FontWeight.w800,

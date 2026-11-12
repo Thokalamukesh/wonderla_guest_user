@@ -6,6 +6,14 @@
       "destination": "https://routing.openstreetmap.de/routed-foot/route/v1/foot/:path*"
     },
     {
+      "source": "/driving-route/:path*",
+      "destination": "https://routing.openstreetmap.de/routed-car/route/v1/driving/:path*"
+    },
+    {
+      "source": "/valhalla-route/:path*",
+      "destination": "https://valhalla1.openstreetmap.de/:path*"
+    },
+    {
       "source": "/wonderla/:path*",
       "destination": "https://wonderla-qr-project.vercel.app/wonderla/:path*"
     },

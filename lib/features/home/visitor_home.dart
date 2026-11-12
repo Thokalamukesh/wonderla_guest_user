@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../cms/cms_api.dart';
 import '../park_map/services/location_service.dart';

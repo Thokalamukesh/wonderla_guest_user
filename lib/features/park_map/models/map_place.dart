@@ -30,16 +30,20 @@ class RouteStep {
   final double distanceMeters;
 }
 
+enum RouteMode { walking, driving }
+
 class WalkingRoute {
   const WalkingRoute({
     required this.points,
     required this.distanceMeters,
     required this.durationSeconds,
     required this.steps,
+    this.mode = RouteMode.walking,
   });
 
   final List<LatLng> points;
   final double distanceMeters;
   final double durationSeconds;
   final List<RouteStep> steps;
+  final RouteMode mode;
 }

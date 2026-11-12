@@ -15,8 +15,11 @@ class OpenStreetMapService {
 
   static const _overpassUrl = 'https://overpass-api.de/api/interpreter';
   static const _nominatimUrl = 'https://nominatim.openstreetmap.org/search';
-  static const _footRouterUrl =
+  static const _walkingRouterUrl =
       'https://routing.openstreetmap.de/routed-foot/route/v1/foot';
+  static const _drivingRouterUrl =
+      'https://routing.openstreetmap.de/routed-car/route/v1/driving';
+  static const _valhallaRouterUrl = 'https://valhalla1.openstreetmap.de/route';
   static Map<String, String> get _headers => {
     // Browsers forbid apps from setting User-Agent. Sending it through
     // BrowserClient makes fetch fail before the routing response is returned.
@@ -160,38 +163,82 @@ out center tags;
   Future<WalkingRoute> findWalkingRoute({
     required LatLng from,
     required LatLng to,
+    RouteMode mode = RouteMode.walking,
   }) async {
     await _respectRouteLimit();
     final coordinates =
         '${from.longitude},${from.latitude};${to.longitude},${to.latitude}';
+    final isWalking = mode == RouteMode.walking;
+    final proxyPath = isWalking ? '/walking-route' : '/driving-route';
+    final routerUrl = isWalking ? _walkingRouterUrl : _drivingRouterUrl;
     final routeUri = kIsWeb
-        ? Uri.base.resolve('/walking-route/$coordinates')
-        : Uri.parse('$_footRouterUrl/$coordinates');
-    final uri = routeUri.replace(
+        ? Uri.base.resolve('$proxyPath/$coordinates')
+        : Uri.parse('$routerUrl/$coordinates');
+    final primaryUri = routeUri.replace(
       queryParameters: const {
         'overview': 'full',
         'geometries': 'geojson',
         'steps': 'true',
       },
     );
-    final response = await _client
-        .get(uri, headers: _headers)
-        .timeout(const Duration(seconds: 25));
-    _lastRouteRequest = DateTime.now();
-    if (response.statusCode != 200) {
-      throw Exception('Walking route returned ${response.statusCode}.');
+    try {
+      final primary = await _client
+          .get(primaryUri, headers: _headers)
+          .timeout(const Duration(seconds: 12));
+      return _parseOsrmRoute(primary, mode);
+    } catch (_) {
+      try {
+        final fallback = await _client
+            .get(_valhallaUri(from, to, mode), headers: _valhallaHeaders)
+            .timeout(const Duration(seconds: 18));
+        return _parseOsrmRoute(fallback, mode);
+      } catch (_) {
+        throw Exception(
+          'Directions are temporarily unavailable. Check your connection and try again.',
+        );
+      }
+    } finally {
+      _lastRouteRequest = DateTime.now();
     }
+  }
 
+  Map<String, String> get _valhallaHeaders => {
+    ..._headers,
+    'X-Client-Id': 'wonderla-guest-user',
+  };
+
+  Uri _valhallaUri(LatLng from, LatLng to, RouteMode mode) {
+    final payload = {
+      'locations': [
+        {'lat': from.latitude, 'lon': from.longitude},
+        {'lat': to.latitude, 'lon': to.longitude},
+      ],
+      'costing': mode == RouteMode.walking ? 'pedestrian' : 'auto',
+      'units': 'kilometers',
+      'format': 'osrm',
+      'shape_format': 'geojson',
+      'directions_type': 'instructions',
+    };
+    final uri = kIsWeb
+        ? Uri.base.resolve('/valhalla-route/route')
+        : Uri.parse(_valhallaRouterUrl);
+    return uri.replace(queryParameters: {'json': jsonEncode(payload)});
+  }
+
+  WalkingRoute _parseOsrmRoute(http.Response response, RouteMode mode) {
+    if (response.statusCode != 200) {
+      throw const FormatException('Routing service returned an error.');
+    }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     if (payload['code'] != 'Ok') {
-      throw Exception('No mapped walking route is available for this place.');
+      throw const FormatException('No route found.');
     }
     final routes = payload['routes'] as List<dynamic>? ?? const [];
-    if (routes.isEmpty) throw Exception('No walking route was found.');
+    if (routes.isEmpty) throw const FormatException('No route found.');
     final route = routes.first as Map<String, dynamic>;
-    final geometry = route['geometry'] as Map<String, dynamic>;
-    final coordinatesList = geometry['coordinates'] as List<dynamic>;
-    final points = coordinatesList
+    final geometry = route['geometry'] as Map<String, dynamic>?;
+    final coordinates = geometry?['coordinates'] as List<dynamic>? ?? const [];
+    final points = coordinates
         .map((pair) {
           final coordinate = pair as List<dynamic>;
           return LatLng(
@@ -200,6 +247,9 @@ out center tags;
           );
         })
         .toList(growable: false);
+    if (points.length < 2) {
+      throw const FormatException('Route geometry is empty.');
+    }
 
     final legs = route['legs'] as List<dynamic>? ?? const [];
     final firstLeg = legs.isEmpty ? null : legs.first as Map<String, dynamic>;
@@ -209,11 +259,15 @@ out center tags;
           final step = value as Map<String, dynamic>;
           final maneuver =
               step['maneuver'] as Map<String, dynamic>? ?? const {};
-          final type = maneuver['type'] as String? ?? 'continue';
-          final modifier = maneuver['modifier'] as String?;
-          final roadName = step['name'] as String? ?? '';
+          final instruction = maneuver['instruction'] as String?;
           return RouteStep(
-            instruction: _instruction(type, modifier, roadName),
+            instruction:
+                instruction ??
+                _instruction(
+                  maneuver['type'] as String? ?? 'continue',
+                  maneuver['modifier'] as String?,
+                  step['name'] as String? ?? '',
+                ),
             distanceMeters: (step['distance'] as num? ?? 0).toDouble(),
           );
         })
@@ -224,6 +278,7 @@ out center tags;
       distanceMeters: (route['distance'] as num).toDouble(),
       durationSeconds: (route['duration'] as num).toDouble(),
       steps: steps,
+      mode: mode,
     );
   }
 
