@@ -185,13 +185,13 @@ out center tags;
       final primary = await _client
           .get(primaryUri, headers: _headers)
           .timeout(const Duration(seconds: 12));
-      return _parseOsrmRoute(primary, mode);
+      return _parseOsrmRoute(primary, mode, from: from, to: to);
     } catch (_) {
       try {
         final fallback = await _client
             .get(_valhallaUri(from, to, mode), headers: _valhallaHeaders)
             .timeout(const Duration(seconds: 18));
-        return _parseOsrmRoute(fallback, mode);
+        return _parseOsrmRoute(fallback, mode, from: from, to: to);
       } catch (_) {
         throw Exception(
           'Directions are temporarily unavailable. Check your connection and try again.',
@@ -225,7 +225,12 @@ out center tags;
     return uri.replace(queryParameters: {'json': jsonEncode(payload)});
   }
 
-  WalkingRoute _parseOsrmRoute(http.Response response, RouteMode mode) {
+  WalkingRoute _parseOsrmRoute(
+    http.Response response,
+    RouteMode mode, {
+    required LatLng from,
+    required LatLng to,
+  }) {
     if (response.statusCode != 200) {
       throw const FormatException('Routing service returned an error.');
     }
@@ -236,6 +241,11 @@ out center tags;
     final routes = payload['routes'] as List<dynamic>? ?? const [];
     if (routes.isEmpty) throw const FormatException('No route found.');
     final route = routes.first as Map<String, dynamic>;
+    final routeDistance = (route['distance'] as num).toDouble();
+    if (routeDistance <= 0.5 &&
+        (from.latitude != to.latitude || from.longitude != to.longitude)) {
+      throw const FormatException('Routing service returned an empty route.');
+    }
     final geometry = route['geometry'] as Map<String, dynamic>?;
     final coordinates = geometry?['coordinates'] as List<dynamic>? ?? const [];
     final points = coordinates
@@ -275,7 +285,7 @@ out center tags;
 
     return WalkingRoute(
       points: points,
-      distanceMeters: (route['distance'] as num).toDouble(),
+      distanceMeters: routeDistance,
       durationSeconds: (route['duration'] as num).toDouble(),
       steps: steps,
       mode: mode,
