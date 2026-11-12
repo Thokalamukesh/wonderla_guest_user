@@ -392,7 +392,8 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       fit: StackFit.expand,
       children: [
         _showLayout ? _layoutMap(image, places) : _liveMap(places),
-        Positioned(top: 10, left: 10, right: 10, child: _searchBox()),
+        Positioned(top: 10, left: 10, child: _backButton()),
+        Positioned(top: 10, left: 62, right: 10, child: _searchBox()),
         Positioned(
           top: 76,
           right: 12,
@@ -467,6 +468,17 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : Icon(icon, color: _mapNavy),
+    ),
+  );
+
+  Widget _backButton() => Material(
+    color: Colors.white,
+    elevation: 4,
+    shape: const CircleBorder(),
+    child: IconButton(
+      tooltip: 'Back',
+      onPressed: () => Navigator.of(context).maybePop(),
+      icon: const Icon(Icons.arrow_back_rounded, color: _mapNavy),
     ),
   );
 
