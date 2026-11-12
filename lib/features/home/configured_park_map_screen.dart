@@ -65,6 +65,35 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     return '${widget.baseUrl}${path.startsWith('/') ? '' : '/'}$path';
   }
 
+  String get _parkIdentity => [
+    widget.config['slug'],
+    widget.config['name'],
+    widget.config['location'],
+    widget.config['city'],
+    widget.config['title'],
+  ].whereType<Object>().join(' ').toLowerCase();
+
+  bool get _isBengaluruPark {
+    if (RegExp(r'\b(bengaluru|bangalore)\b').hasMatch(_parkIdentity)) {
+      return true;
+    }
+    if (RegExp(r'\b(kochi|cochin|hyderabad|bhubaneswar|chennai)\b')
+        .hasMatch(_parkIdentity)) {
+      return false;
+    }
+    final lat = double.tryParse('${_map['centerLat']}');
+    final lng = double.tryParse('${_map['centerLng']}');
+    return lat != null &&
+        lng != null &&
+        Geolocator.distanceBetween(
+              lat,
+              lng,
+              wonderlaBengaluruLatitude,
+              wonderlaBengaluruLongitude,
+            ) <
+            5000;
+  }
+
   LatLng? _placePosition(Map<String, dynamic> place) {
     final lat = double.tryParse('${place['lat']}');
     final lng = double.tryParse('${place['lng']}');
@@ -77,16 +106,13 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       return LatLng(lat, lng);
     }
 
-    // Reuse the verified Bengaluru OSM coordinates already shipped with the
-    // app for matching CMS labels that do not yet contain lat/lng fields.
-    if (widget.config['slug'] == 'bengaluru') {
-      final name = place['name']?.toString().trim().toLowerCase() ?? '';
+    // These in-park destinations ship with verified coordinates, so they
+    // remain routable even when CMS entries have no lat/lng fields.
+    if (_isBengaluruPark) {
+      final name = _normalizePlaceName(place['name']?.toString() ?? '');
       for (final known in wonderlaFeaturedLocations) {
-        final knownName = known.name.toLowerCase();
-        if (name == knownName ||
-            knownName.startsWith('$name ') ||
-            (name.startsWith('wave pool') &&
-                knownName.startsWith('wave pool '))) {
+        final knownName = _normalizePlaceName(known.name);
+        if (name == knownName || knownName.startsWith('$name ')) {
           return known.position;
         }
       }
@@ -94,16 +120,13 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     return null;
   }
 
+  String _normalizePlaceName(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+
   LatLng? get _configuredCenter {
     // CMS park records may not include the slug in every response path, so
     // identify the selected park from its display name and location too.
-    final identity = [
-      widget.config['slug'],
-      widget.config['name'],
-      widget.config['location'],
-      widget.config['city'],
-      widget.config['title'],
-    ].whereType<Object>().join(' ').toLowerCase();
+    final identity = _parkIdentity;
     for (final entry in wonderlaParkCoordinates.entries) {
       final aliases = switch (entry.key) {
         'bengaluru' => const ['bengaluru', 'bangalore'],
