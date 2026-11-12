@@ -95,9 +95,22 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   }
 
   LatLng? get _configuredCenter {
-    final slug = widget.config['slug']?.toString().toLowerCase() ?? '';
+    // CMS park records may not include the slug in every response path, so
+    // identify the selected park from its display name and location too.
+    final identity = [
+      widget.config['slug'],
+      widget.config['name'],
+      widget.config['location'],
+      widget.config['city'],
+      widget.config['title'],
+    ].whereType<Object>().join(' ').toLowerCase();
     for (final entry in wonderlaParkCoordinates.entries) {
-      if (slug.contains(entry.key)) {
+      final aliases = switch (entry.key) {
+        'bengaluru' => const ['bengaluru', 'bangalore'],
+        'kochi' => const ['kochi', 'cochin'],
+        _ => [entry.key],
+      };
+      if (aliases.any(identity.contains)) {
         return LatLng(entry.value.$1, entry.value.$2);
       }
     }
