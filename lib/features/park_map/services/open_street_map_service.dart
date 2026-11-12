@@ -164,8 +164,15 @@ out center tags;
     await _respectRouteLimit();
     final coordinates =
         '${from.longitude},${from.latitude};${to.longitude},${to.latitude}';
-    final uri = Uri.parse(
-      '$_footRouterUrl/$coordinates?overview=full&geometries=geojson&steps=true',
+    final routeUri = kIsWeb
+        ? Uri.base.resolve('/walking-route/$coordinates')
+        : Uri.parse('$_footRouterUrl/$coordinates');
+    final uri = routeUri.replace(
+      queryParameters: const {
+        'overview': 'full',
+        'geometries': 'geojson',
+        'steps': 'true',
+      },
     );
     final response = await _client
         .get(uri, headers: _headers)

@@ -2,6 +2,10 @@
   "outputDirectory": "build/web",
   "rewrites": [
     {
+      "source": "/walking-route/:path*",
+      "destination": "https://routing.openstreetmap.de/routed-foot/route/v1/foot/:path*"
+    },
+    {
       "source": "/wonderla/:path*",
       "destination": "https://wonderla-qr-project.vercel.app/wonderla/:path*"
     },
