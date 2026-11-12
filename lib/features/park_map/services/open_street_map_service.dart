@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -15,9 +16,11 @@ class OpenStreetMapService {
   static const _overpassUrl = 'https://overpass-api.de/api/interpreter';
   static const _nominatimUrl = 'https://nominatim.openstreetmap.org/search';
   static const _footRouterUrl =
-      'https://routing.openstreetmap.de/routed-foot/route/v1/driving';
-  static const _headers = <String, String>{
-    'User-Agent': 'WonderlaBengaluruFlutterMap/1.0',
+      'https://routing.openstreetmap.de/routed-foot/route/v1/foot';
+  static Map<String, String> get _headers => {
+    // Browsers forbid apps from setting User-Agent. Sending it through
+    // BrowserClient makes fetch fail before the routing response is returned.
+    if (!kIsWeb) 'User-Agent': 'WonderlaBengaluruFlutterMap/1.0',
     'Accept': 'application/json',
   };
 
