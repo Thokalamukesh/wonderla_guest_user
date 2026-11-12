@@ -10,12 +10,6 @@ class LocationResult {
 class LocationService {
   Future<LocationResult> currentPosition() async {
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        return const LocationResult(
-          message: 'Turn on location services to find your position.',
-        );
-      }
-
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -26,6 +20,12 @@ class LocationService {
       if (permission == LocationPermission.deniedForever) {
         return const LocationResult(
           message: 'Allow location access in your device settings.',
+        );
+      }
+
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        return const LocationResult(
+          message: 'Turn on location services to find your position.',
         );
       }
 
