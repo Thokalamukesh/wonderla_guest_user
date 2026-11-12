@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../cms/cms_api.dart';
+import '../park_map/services/location_service.dart';
 import 'configured_park_map_screen.dart';
 import '../cms/cms_screen.dart';
 import '../../shared/scroll_reveal.dart';
@@ -156,18 +158,38 @@ class _VisitorHomeState extends State<VisitorHome> {
     final cfg = _park;
     if (cfg == null) return;
     if (section == 'PARK MAP') {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) =>
-              ConfiguredParkMapScreen(config: cfg, baseUrl: _api.baseUrl),
-        ),
-      );
+      _openParkMap(cfg);
       return;
     }
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) =>
             VisitorSectionScreen(title: section, config: cfg, api: _api),
+      ),
+    );
+  }
+
+  Future<void> _openParkMap(Map<String, dynamic> cfg) async {
+    final result = await LocationService().currentPosition();
+    if (!mounted) return;
+    if (result.position == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.message ??
+                'Location permission is required to open the park map.',
+          ),
+        ),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConfiguredParkMapScreen(
+          config: cfg,
+          baseUrl: _api.baseUrl,
+          initialPosition: result.position!,
+        ),
       ),
     );
   }

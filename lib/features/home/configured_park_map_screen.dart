@@ -17,16 +17,17 @@ const _mapNavy = wonderlaCobalt;
 const _mapInk = wonderlaNavy;
 const _mapCanvas = wonderlaCream;
 
-/// Park specific map. It uses the visitor GPS position as the initial focus,
-/// then displays only the coordinates managed for this park in the CMS.
+/// Park map centered on the selected park, with visitor GPS shown only nearby.
 class ConfiguredParkMapScreen extends StatefulWidget {
   const ConfiguredParkMapScreen({
     super.key,
     required this.config,
     required this.baseUrl,
+    required this.initialPosition,
   });
   final Map<String, dynamic> config;
   final String baseUrl;
+  final Position initialPosition;
 
   @override
   State<ConfiguredParkMapScreen> createState() =>
@@ -44,7 +45,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   LatLng? _visitorPosition;
   Map<String, dynamic>? _selected;
   WalkingRoute? _route;
-  bool _gpsLoading = true;
+  bool _gpsLoading = false;
   bool _routing = false;
   bool _mapReady = false;
   bool _showLayout = false;
@@ -94,6 +95,12 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   }
 
   LatLng? get _configuredCenter {
+    final slug = widget.config['slug']?.toString().toLowerCase() ?? '';
+    for (final entry in wonderlaParkCoordinates.entries) {
+      if (slug.contains(entry.key)) {
+        return LatLng(entry.value.$1, entry.value.$2);
+      }
+    }
     final lat = double.tryParse('${_map['centerLat']}');
     final lng = double.tryParse('${_map['centerLng']}');
     if (lat != null &&
@@ -123,7 +130,48 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     _center = _configuredCenter;
     _showLayout =
         _center == null && _imageUrl(_map['img']?.toString()).isNotEmpty;
-    _locateVisitor();
+    final point = LatLng(
+      widget.initialPosition.latitude,
+      widget.initialPosition.longitude,
+    );
+    if (_isNearPark(point)) {
+      _visitorPosition = point;
+      _positionSubscription = _location.watchPosition().listen(
+        (position) {
+          if (!mounted) return;
+          final next = LatLng(position.latitude, position.longitude);
+          setState(() {
+            _visitorPosition = _isNearPark(next) ? next : null;
+            _locationMessage = _visitorPosition == null
+                ? 'You are outside the park area. Showing the park map.'
+                : null;
+          });
+          if (_visitorPosition == null &&
+              _mapReady &&
+              _configuredCenter != null) {
+            _controller.move(_configuredCenter!, 16);
+          }
+        },
+        onError: (_) {
+          if (mounted)
+            setState(() => _locationMessage = 'Live location updates stopped.');
+        },
+      );
+    } else {
+      _locationMessage = 'You are outside the park area. Showing the park map.';
+    }
+  }
+
+  bool _isNearPark(LatLng point) {
+    final park = _configuredCenter;
+    if (park == null) return false;
+    return Geolocator.distanceBetween(
+          point.latitude,
+          point.longitude,
+          park.latitude,
+          park.longitude,
+        ) <=
+        1500;
   }
 
   @override
@@ -161,31 +209,48 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       _locationMessage = result.message;
       if (position != null) {
         _visitorPosition = LatLng(position.latitude, position.longitude);
-        _center = _visitorPosition;
+        if (!_isNearPark(_visitorPosition!)) {
+          _visitorPosition = null;
+          _locationMessage =
+              'You are outside the park area. Showing the park map.';
+        }
         if (_showLayout) {
           _showLayout = false;
           _mapReady = false;
         }
-        _positionSubscription ??= _location.watchPosition().listen(
-          (position) {
-            if (!mounted) return;
-            setState(() {
-              _visitorPosition = LatLng(position.latitude, position.longitude);
-              _locationMessage = null;
-            });
-          },
-          onError: (_) {
-            if (mounted) {
-              setState(
-                () => _locationMessage = 'Live location updates stopped.',
-              );
-            }
-          },
-        );
+        if (_visitorPosition != null)
+          _positionSubscription ??= _location.watchPosition().listen(
+            (position) {
+              if (!mounted) return;
+              final next = LatLng(position.latitude, position.longitude);
+              setState(() {
+                _visitorPosition = _isNearPark(next) ? next : null;
+                _locationMessage = _visitorPosition == null
+                    ? 'You are outside the park area. Showing the park map.'
+                    : null;
+              });
+              if (_visitorPosition == null &&
+                  _mapReady &&
+                  _configuredCenter != null) {
+                _controller.move(_configuredCenter!, 16);
+              }
+            },
+            onError: (_) {
+              if (mounted) {
+                setState(
+                  () => _locationMessage = 'Live location updates stopped.',
+                );
+              }
+            },
+          );
       }
     });
-    if (position != null && _mapReady) {
+    if (position != null &&
+        _isNearPark(LatLng(position.latitude, position.longitude)) &&
+        _mapReady) {
       _controller.move(LatLng(position.latitude, position.longitude), 17);
+    } else if (position != null && _mapReady && _configuredCenter != null) {
+      _controller.move(_configuredCenter!, 16);
     }
   }
 
@@ -218,7 +283,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       );
       return;
     }
-    if (_visitorPosition == null) {
+    if (_visitorPosition == null || !_isNearPark(_visitorPosition!)) {
       await _locateVisitor();
       if (_visitorPosition == null) {
         if (mounted) {
@@ -468,7 +533,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
                   height: 54,
                   child: _placePin(place),
                 ),
-            if (_visitorPosition case final point?)
+            if (_visitorPosition case final point? when _isNearPark(point))
               Marker(
                 point: point,
                 width: 40,
@@ -707,6 +772,8 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
 
   Widget _locationStatus() {
     final live = _visitorPosition != null;
+    final outsidePark =
+        _locationMessage?.contains('outside the park area') ?? false;
     final color = _gpsLoading
         ? wonderlaWarning
         : live
@@ -716,6 +783,8 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         ? 'Locating'
         : live
         ? 'Live GPS'
+        : outsidePark
+        ? 'Park map'
         : 'GPS off';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
