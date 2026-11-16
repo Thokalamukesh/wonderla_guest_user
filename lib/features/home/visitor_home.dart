@@ -272,9 +272,9 @@ class _VisitorHomeState extends State<VisitorHome> {
                     builder: (context, constraints) {
                       final width = constraints.crossAxisExtent;
                       final compact = width < 520;
-                      // Keep the two-column cards wide enough for longer
-                      // labels such as "Maintenance Log" on phones.
-                      final columns = width < 440 ? 1 : (compact ? 2 : 3);
+                      // Keep cards wide enough for long labels such as
+                      // "Maintenance Log" on narrow browser and phone views.
+                      final columns = width < 720 ? 1 : (width < 1100 ? 2 : 3);
                       return SliverGrid.builder(
                         itemCount: _tiles.length,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
