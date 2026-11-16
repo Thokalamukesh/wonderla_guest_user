@@ -166,8 +166,9 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   void initState() {
     super.initState();
     _center = _configuredCenter;
-    _showLayout =
-        _center == null && _imageUrl(_map['img']?.toString()).isNotEmpty;
+    // A configured park layout is a single image and appears faster than
+    // waiting for the live map's network tiles. Visitors can switch to live map.
+    _showLayout = _imageUrl(_map['img']?.toString()).isNotEmpty;
     final initialPosition = widget.initialPosition;
     if (initialPosition != null) {
       final point = LatLng(initialPosition.latitude, initialPosition.longitude);
@@ -374,12 +375,8 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           onPressed: () => Navigator.of(context).maybePop(),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: Text(
-          widget.config['name']?.toString() ?? 'Park map',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
+        titleSpacing: 0,
+        title: _searchBox(),
         actions: [
           PopupMenuButton<RouteMode>(
             tooltip: 'Travel mode',
@@ -439,8 +436,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     child: Stack(
       fit: StackFit.expand,
       children: [
-        _showLayout ? _layoutMap(image, places) : _liveMap(places),
-        Positioned(top: 10, left: 10, right: 10, child: _searchBox()),
+        _showLayout ? _layoutMap(image) : _liveMap(places),
         Positioned(
           top: 76,
           right: 12,
@@ -683,63 +679,26 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     return Icons.attractions_rounded;
   }
 
-  Widget _layoutMap(String image, List<Map<String, dynamic>> places) =>
-      InteractiveViewer(
-        minScale: .8,
-        maxScale: 4,
-        child: LayoutBuilder(
-          builder: (context, constraints) => SizedBox(
-            width: constraints.maxWidth,
-            height: constraints.maxHeight,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.network(
-                  image,
-                  fit: BoxFit.fill,
-                  errorBuilder: (_, _, _) => _noLayout(),
-                ),
-                for (final place in places)
-                  _layoutPin(
-                    place,
-                    constraints.maxWidth,
-                    constraints.maxHeight,
-                  ),
-              ],
+  Widget _layoutMap(String image) => InteractiveViewer(
+    minScale: .8,
+    maxScale: 4,
+    child: LayoutBuilder(
+      builder: (context, constraints) => SizedBox(
+        width: constraints.maxWidth,
+        height: constraints.maxHeight,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              image,
+              fit: BoxFit.fill,
+              errorBuilder: (_, _, _) => _noLayout(),
             ),
-          ),
-        ),
-      );
-  Widget _layoutPin(Map<String, dynamic> place, double width, double height) {
-    final x = (double.tryParse('${place['x']}') ?? 50).clamp(0, 100);
-    final y = (double.tryParse('${place['y']}') ?? 50).clamp(0, 100);
-    final selected = _selected?['name'] == place['name'];
-    return Positioned(
-      left: width * x / 100 - 16,
-      top: height * y / 100 - 18,
-      child: GestureDetector(
-        onTap: () => _focusPlace(place),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-            color: selected ? wonderlaGold : _mapNavy,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: const [
-              BoxShadow(color: Color(0x44071a3d), blurRadius: 7),
-            ],
-          ),
-          child: Icon(
-            _placeIcon(place['category']?.toString()),
-            color: selected ? wonderlaNavy : Colors.white,
-            size: 17,
-          ),
+          ],
         ),
       ),
-    );
-  }
-
+    ),
+  );
   Widget _placeTray(List<Map<String, dynamic>> places) {
     final query = _searchController.text.trim().toLowerCase();
     final visiblePlaces = query.isEmpty
@@ -966,40 +925,37 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     return '${_formatDistance(meters)} away';
   }
 
-  Widget _searchBox() => Padding(
-    padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-    child: TextField(
-      controller: _searchController,
-      textInputAction: TextInputAction.search,
-      onChanged: (_) => setState(() {}),
-      decoration: InputDecoration(
-        hintText: 'Search rides, shops, restaurants…',
-        prefixIcon: const Icon(Icons.search_rounded, color: _mapNavy),
-        suffixIcon: _searchController.text.isEmpty
-            ? null
-            : IconButton(
-                tooltip: 'Clear search',
-                onPressed: () {
-                  _searchController.clear();
-                  setState(() {});
-                },
-                icon: const Icon(Icons.close_rounded),
-              ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 15),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(17),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(17),
-          borderSide: const BorderSide(color: wonderlaNavy),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(17),
-          borderSide: const BorderSide(color: _mapNavy, width: 1.5),
-        ),
+  Widget _searchBox() => TextField(
+    controller: _searchController,
+    textInputAction: TextInputAction.search,
+    onChanged: (_) => setState(() {}),
+    decoration: InputDecoration(
+      hintText: 'Search rides, shops, restaurants…',
+      prefixIcon: const Icon(Icons.search_rounded, color: _mapNavy),
+      suffixIcon: _searchController.text.isEmpty
+          ? null
+          : IconButton(
+              tooltip: 'Clear search',
+              onPressed: () {
+                _searchController.clear();
+                setState(() {});
+              },
+              icon: const Icon(Icons.close_rounded),
+            ),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(17),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(17),
+        borderSide: const BorderSide(color: wonderlaNavy),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(17),
+        borderSide: const BorderSide(color: _mapNavy, width: 1.5),
       ),
     ),
   );

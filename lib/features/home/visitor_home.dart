@@ -270,8 +270,9 @@ class _VisitorHomeState extends State<VisitorHome> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   sliver: SliverLayoutBuilder(
                     builder: (context, constraints) {
-                      final compact = constraints.crossAxisExtent < 520;
-                      final columns = compact ? 2 : 3;
+                      final width = constraints.crossAxisExtent;
+                      final compact = width < 520;
+                      final columns = width < 360 ? 1 : (compact ? 2 : 3);
                       return SliverGrid.builder(
                         itemCount: _tiles.length,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -1337,80 +1338,98 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
   List<Widget> _safety() => [
     for (final item in _list('safetyHygiene')) _mediaCard(item),
   ];
-  List<Widget> _maintenance() => [
-    Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          Container(
-            color: _navy,
-            padding: const EdgeInsets.all(14),
-            child: const Row(
+  List<Widget> _maintenance() {
+    final entries = _list('maintenanceLog');
+    if (entries.isEmpty) return [_empty('Maintenance log')];
+    return [
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 480;
+          return Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
               children: [
-                Expanded(
-                  child: Text(
-                    'Ride',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
+                if (!compact)
+                  Container(
+                    color: _navy,
+                    padding: const EdgeInsets.all(14),
+                    child: const Row(
+                      children: [
+                        Expanded(flex: 5, child: _MaintenanceHeading('Ride')),
+                        Expanded(
+                          flex: 4,
+                          child: _MaintenanceHeading('Last service'),
+                        ),
+                        Expanded(flex: 2, child: _MaintenanceHeading('Checks')),
+                      ],
                     ),
                   ),
-                ),
-                Expanded(
-                  child: Text(
-                    'Last service',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                Text(
-                  'Checks',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+                for (var i = 0; i < entries.length; i++)
+                  _maintenanceRow(entries[i], i, compact),
               ],
             ),
-          ),
-          for (var i = 0; i < _list('maintenanceLog').length; i++)
-            Builder(
-              builder: (_) {
-                final item = _list('maintenanceLog')[i];
-                return Container(
-                  color: i.isEven ? Colors.white : wonderlaWhite,
-                  padding: const EdgeInsets.all(15),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item['ride']?.toString() ?? '',
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          item['lastService']?.toString() ?? '',
-                          style: const TextStyle(color: wonderlaNavy),
-                        ),
-                      ),
-                      Text(item['checks']?.toString() ?? ''),
-                    ],
-                  ),
-                );
-              },
+          );
+        },
+      ),
+    ];
+  }
+
+  Widget _maintenanceRow(Map<String, dynamic> item, int index, bool compact) {
+    final ride = item['ride']?.toString() ?? '';
+    final service = item['lastService']?.toString() ?? '';
+    final checks = item['checks']?.toString() ?? '';
+    final background = index.isEven ? Colors.white : wonderlaWhite;
+    if (compact) {
+      return Container(
+        width: double.infinity,
+        color: background,
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(ride, style: const TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 18,
+              runSpacing: 6,
+              children: [
+                _maintenanceValue('Last service', service),
+                _maintenanceValue('Checks', checks),
+              ],
             ),
+          ],
+        ),
+      );
+    }
+    return Container(
+      color: background,
+      padding: const EdgeInsets.all(15),
+      child: Row(
+        children: [
+          Expanded(flex: 5, child: Text(ride, softWrap: true)),
+          Expanded(flex: 4, child: Text(service, softWrap: true)),
+          Expanded(flex: 2, child: Text(checks, softWrap: true)),
         ],
       ),
+    );
+  }
+
+  Widget _maintenanceValue(String label, String value) => RichText(
+    text: TextSpan(
+      style: const TextStyle(color: wonderlaNavy, fontSize: 13),
+      children: [
+        TextSpan(
+          text: '$label: ',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        TextSpan(text: value),
+      ],
     ),
-    if (_list('maintenanceLog').isEmpty) _empty('Maintenance log'),
-  ];
+  );
 
   Widget _mediaCard(Map<String, dynamic> item, {bool event = false}) => Card(
     color: Colors.white,
@@ -1655,5 +1674,17 @@ class _LoadError extends StatelessWidget {
         ],
       ),
     ),
+  );
+}
+
+class _MaintenanceHeading extends StatelessWidget {
+  const _MaintenanceHeading(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    label,
+    softWrap: true,
+    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
   );
 }
