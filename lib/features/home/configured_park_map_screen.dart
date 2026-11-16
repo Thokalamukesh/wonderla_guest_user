@@ -23,11 +23,11 @@ class ConfiguredParkMapScreen extends StatefulWidget {
     super.key,
     required this.config,
     required this.baseUrl,
-    required this.initialPosition,
+    this.initialPosition,
   });
   final Map<String, dynamic> config;
   final String baseUrl;
-  final Position initialPosition;
+  final Position? initialPosition;
 
   @override
   State<ConfiguredParkMapScreen> createState() =>
@@ -168,37 +168,42 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     _center = _configuredCenter;
     _showLayout =
         _center == null && _imageUrl(_map['img']?.toString()).isNotEmpty;
-    final point = LatLng(
-      widget.initialPosition.latitude,
-      widget.initialPosition.longitude,
-    );
-    if (_isNearPark(point)) {
-      _visitorPosition = point;
-      _positionSubscription = _location.watchPosition().listen(
-        (position) {
-          if (!mounted) return;
-          final next = LatLng(position.latitude, position.longitude);
-          setState(() {
-            _visitorPosition = _isNearPark(next) ? next : null;
-            _locationMessage = _visitorPosition == null
-                ? 'You are outside the park area. Showing the park map.'
-                : null;
-          });
-          if (_visitorPosition == null &&
-              _mapReady &&
-              _configuredCenter != null) {
-            _controller.move(_configuredCenter!, 16);
-          }
-        },
-        onError: (_) {
-          if (mounted) {
-            setState(() => _locationMessage = 'Live location updates stopped.');
-          }
-        },
-      );
-    } else {
-      _locationMessage = 'You are outside the park area. Showing the park map.';
+    final initialPosition = widget.initialPosition;
+    if (initialPosition != null) {
+      final point = LatLng(initialPosition.latitude, initialPosition.longitude);
+      if (_isNearPark(point)) {
+        _visitorPosition = point;
+        _watchVisitorPosition();
+      } else {
+        _locationMessage =
+            'You are outside the park area. Showing the park map.';
+      }
     }
+  }
+
+  void _watchVisitorPosition() {
+    _positionSubscription ??= _location.watchPosition().listen(
+      (position) {
+        if (!mounted) return;
+        final next = LatLng(position.latitude, position.longitude);
+        setState(() {
+          _visitorPosition = _isNearPark(next) ? next : null;
+          _locationMessage = _visitorPosition == null
+              ? 'You are outside the park area. Showing the park map.'
+              : null;
+        });
+        if (_visitorPosition == null &&
+            _mapReady &&
+            _configuredCenter != null) {
+          _controller.move(_configuredCenter!, 16);
+        }
+      },
+      onError: (_) {
+        if (mounted) {
+          setState(() => _locationMessage = 'Live location updates stopped.');
+        }
+      },
+    );
   }
 
   bool _isNearPark(LatLng point) {
@@ -257,32 +262,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           _showLayout = false;
           _mapReady = false;
         }
-        if (_visitorPosition != null) {
-          _positionSubscription ??= _location.watchPosition().listen(
-            (position) {
-              if (!mounted) return;
-              final next = LatLng(position.latitude, position.longitude);
-              setState(() {
-                _visitorPosition = _isNearPark(next) ? next : null;
-                _locationMessage = _visitorPosition == null
-                    ? 'You are outside the park area. Showing the park map.'
-                    : null;
-              });
-              if (_visitorPosition == null &&
-                  _mapReady &&
-                  _configuredCenter != null) {
-                _controller.move(_configuredCenter!, 16);
-              }
-            },
-            onError: (_) {
-              if (mounted) {
-                setState(
-                  () => _locationMessage = 'Live location updates stopped.',
-                );
-              }
-            },
-          );
-        }
+        if (_visitorPosition != null) _watchVisitorPosition();
       }
     });
     if (position != null &&

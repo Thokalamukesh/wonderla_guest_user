@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../cms/cms_api.dart';
-import '../park_map/services/location_service.dart';
 import 'configured_park_map_screen.dart';
 import '../cms/cms_screen.dart';
 import '../../shared/scroll_reveal.dart';
@@ -109,10 +108,15 @@ class _VisitorHomeState extends State<VisitorHome> {
       _error = null;
     });
     try {
-      _parks = (await _api.parks()).where((p) => p['active'] == true).toList();
       final slug = _requestedSlug();
       if (slug != null) {
+        // Shared park links already identify the requested record. Fetching
+        // the whole directory first adds an unnecessary network round trip.
         await _loadPark(slug);
+      } else {
+        _parks = (await _api.parks())
+            .where((p) => p['active'] == true)
+            .toList();
       }
     } catch (e) {
       _error = _friendlyError(e);
@@ -168,27 +172,11 @@ class _VisitorHomeState extends State<VisitorHome> {
     );
   }
 
-  Future<void> _openParkMap(Map<String, dynamic> cfg) async {
-    final result = await LocationService().currentPosition();
-    if (!mounted) return;
-    if (result.position == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result.message ??
-                'Location permission is required to open the park map.',
-          ),
-        ),
-      );
-      return;
-    }
+  void _openParkMap(Map<String, dynamic> cfg) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ConfiguredParkMapScreen(
-          config: cfg,
-          baseUrl: _api.baseUrl,
-          initialPosition: result.position!,
-        ),
+        builder: (_) =>
+            ConfiguredParkMapScreen(config: cfg, baseUrl: _api.baseUrl),
       ),
     );
   }
