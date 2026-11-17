@@ -188,6 +188,7 @@ class _VisitorHomeState extends State<VisitorHome> {
       padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      clipBehavior: Clip.none,
       itemCount: tiles.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
@@ -247,98 +248,124 @@ class _VisitorHomeState extends State<VisitorHome> {
             child: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
-                  child: _HeroCard(
-                    name: heroTitle,
-                    location: cfg['location']?.toString() ?? '',
-                    imageUrl: _imageUrl(cfg['heroImageUrl']?.toString()),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Transform.translate(
-                    offset: const Offset(0, -26),
-                    child: Container(
-                      padding: EdgeInsets.fromLTRB(
-                        compactHome ? 14 : 22,
-                        20,
-                        compactHome ? 14 : 22,
-                        40,
-                      ),
-                      decoration: const BoxDecoration(
-                        color: Color(0xffeef2f8),
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(42),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0x24071a3d),
-                            blurRadius: 24,
-                            offset: Offset(0, -7),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final heroHeight = constraints.maxWidth < 560
+                          ? 320.0
+                          : 360.0;
+                      const overlap = 58.0;
+                      return Stack(
+                        clipBehavior: Clip.none,
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Explore Wonderla',
-                                  style: TextStyle(
-                                    color: _navy,
-                                    fontSize: compactHome ? 25 : 29,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -.5,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                'All shortcuts',
-                                style: TextStyle(
-                                  color: wonderlaMuted,
-                                  fontSize: compactHome ? 13 : 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          _tileGrid(
-                            _tiles,
-                            cfg,
-                            compact: MediaQuery.sizeOf(context).width < 520,
-                            delayOffset: 0,
-                          ),
-                          const SizedBox(height: 26),
-                          const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'MORE PARK INFO',
-                              style: TextStyle(
-                                color: wonderlaMuted,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: .8,
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: heroHeight,
+                            child: _HeroCard(
+                              name: heroTitle,
+                              location: cfg['location']?.toString() ?? '',
+                              imageUrl: _imageUrl(
+                                cfg['heroImageUrl']?.toString(),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              for (final section in _moreSections)
-                                ActionChip(
-                                  label: Text(_displayTitle(section)),
-                                  onPressed: () => _openSection(section),
-                                  backgroundColor: Colors.white,
-                                  side: BorderSide.none,
+                          Padding(
+                            padding: EdgeInsets.only(top: heroHeight - overlap),
+                            child: Container(
+                              padding: EdgeInsets.fromLTRB(
+                                compactHome ? 18 : 28,
+                                26,
+                                compactHome ? 18 : 28,
+                                40,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Color(0xffeaf1f8),
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(60),
                                 ),
-                            ],
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color(0x26344a64),
+                                    blurRadius: 30,
+                                    spreadRadius: 1,
+                                    offset: Offset(0, -12),
+                                  ),
+                                  BoxShadow(
+                                    color: Color(0x12344a64),
+                                    blurRadius: 10,
+                                    offset: Offset(0, -3),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          'Explore Wonderla',
+                                          style: TextStyle(
+                                            color: _navy,
+                                            fontSize: compactHome ? 25 : 29,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: -.5,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        'All shortcuts',
+                                        style: TextStyle(
+                                          color: wonderlaMuted,
+                                          fontSize: compactHome ? 13 : 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                  _tileGrid(
+                                    _tiles,
+                                    cfg,
+                                    compact: constraints.maxWidth < 520,
+                                    delayOffset: 0,
+                                  ),
+                                  const SizedBox(height: 26),
+                                  const Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'MORE PARK INFO',
+                                      style: TextStyle(
+                                        color: wonderlaMuted,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: .8,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    children: [
+                                      for (final section in _moreSections)
+                                        ActionChip(
+                                          label: Text(_displayTitle(section)),
+                                          onPressed: () =>
+                                              _openSection(section),
+                                          backgroundColor: Colors.white,
+                                          side: BorderSide.none,
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -689,126 +716,144 @@ class ShortcutCard extends StatelessWidget {
     curve: Curves.easeOutCubic,
     builder: (context, value, child) =>
         Transform.scale(scale: value, child: child),
-    child: Material(
-      color: Colors.white,
-      elevation: 3,
-      shadowColor: const Color(0x24071a3d),
-      borderRadius: BorderRadius.circular(24),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.all(compact ? 10 : 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _tileImage(),
-                      if (isLive)
-                        Positioned(
-                          top: 10,
-                          left: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xffe84642),
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.circle,
-                                  color: Colors.white,
-                                  size: 7,
-                                ),
-                                SizedBox(width: 5),
-                                Text(
-                                  'LIVE',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: .3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: compact ? 8 : 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _titleCase(title),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: compact ? 17 : 20,
-                        height: 1.12,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -.25,
-                      ),
-                    ),
-                  ),
-                  if (title == 'PARK MAP')
-                    const Icon(
-                      Icons.north_east_rounded,
-                      color: _navy,
-                      size: 21,
-                    ),
-                ],
-              ),
-              if (statusLabel != null) ...[
-                const SizedBox(height: 6),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xffedf0f5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xfffbfdff), width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x203a5069),
+            blurRadius: 24,
+            spreadRadius: 1,
+            offset: Offset(0, 12),
+          ),
+          BoxShadow(
+            color: Color(0x123a5069),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.all(compact ? 10 : 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        const Icon(
-                          Icons.bar_chart_rounded,
-                          size: 14,
-                          color: wonderlaMuted,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          statusLabel!,
-                          style: const TextStyle(
-                            color: _navy,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                        _tileImage(),
+                        if (isLive)
+                          Positioned(
+                            top: 10,
+                            left: 10,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xffe84642),
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.circle,
+                                    color: Colors.white,
+                                    size: 7,
+                                  ),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    'LIVE',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: .3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
                 ),
+                SizedBox(height: compact ? 8 : 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _titleCase(title),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: compact ? 17 : 20,
+                          height: 1.12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -.25,
+                        ),
+                      ),
+                    ),
+                    if (title == 'PARK MAP')
+                      const Icon(
+                        Icons.north_east_rounded,
+                        color: _navy,
+                        size: 21,
+                      ),
+                  ],
+                ),
+                if (statusLabel != null) ...[
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffedf0f5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.bar_chart_rounded,
+                            size: 14,
+                            color: wonderlaMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            statusLabel!,
+                            style: const TextStyle(
+                              color: _navy,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
