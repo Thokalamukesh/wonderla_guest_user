@@ -194,6 +194,7 @@ class _VisitorHomeState extends State<VisitorHome> {
     }
     if (_park == null) return _directory();
     final cfg = _park!;
+    final compactHome = MediaQuery.sizeOf(context).width < 390;
     return Scaffold(
       backgroundColor: _pale,
       body: SafeArea(
@@ -204,22 +205,57 @@ class _VisitorHomeState extends State<VisitorHome> {
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+                    padding: EdgeInsets.fromLTRB(
+                      compactHome ? 16 : 20,
+                      8,
+                      compactHome ? 16 : 20,
+                      18,
+                    ),
                     child: Column(
                       children: [
                         Row(
                           children: [
-                            const Spacer(),
                             Image.asset(
                               'assets/images/wonderla_logo.webp',
-                              width: 190,
-                              height: 62,
+                              width: compactHome ? 158 : 184,
+                              height: 56,
                               fit: BoxFit.contain,
                             ),
                             const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: wonderlaBorder),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.park_rounded,
+                                    color: _navy,
+                                    size: 15,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    'PARK GUIDE',
+                                    style: TextStyle(
+                                      color: _navy,
+                                      fontSize: compactHome ? 9 : 10,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: .55,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         _HeroCard(
                           name: 'WONDERLA',
                           location:
@@ -232,7 +268,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -240,7 +276,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                                     'Explore Wonderla',
                                     style: TextStyle(
                                       color: _navy,
-                                      fontSize: 25,
+                                      fontSize: compactHome ? 23 : 25,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: -.65,
                                       height: 1.08,
@@ -286,7 +322,9 @@ class _VisitorHomeState extends State<VisitorHome> {
                   ),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compactHome ? 16 : 20,
+                  ),
                   sliver: SliverLayoutBuilder(
                     builder: (context, constraints) {
                       final width = constraints.crossAxisExtent;
@@ -757,10 +795,18 @@ class _ExploreTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
-                color: wonderlaNavy,
-                size: compact ? 18 : 24,
+              Container(
+                width: compact ? 30 : 36,
+                height: compact ? 30 : 36,
+                decoration: BoxDecoration(
+                  color: wonderlaCream,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: wonderlaCobalt,
+                  size: compact ? 16 : 19,
+                ),
               ),
             ],
           ),
