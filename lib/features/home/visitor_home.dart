@@ -267,7 +267,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                 ),
                 SliverToBoxAdapter(
                   child: Transform.translate(
-                    offset: const Offset(0, -20),
+                    offset: const Offset(0, -26),
                     child: Container(
                       padding: EdgeInsets.fromLTRB(
                         compactHome ? 14 : 22,
@@ -278,8 +278,15 @@ class _VisitorHomeState extends State<VisitorHome> {
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(26),
+                          top: Radius.circular(36),
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0x24071a3d),
+                            blurRadius: 24,
+                            offset: Offset(0, -7),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,9 +690,7 @@ class _ExploreTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: EdgeInsets.all(compact ? 8 : 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
           child: compact
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
