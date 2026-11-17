@@ -27,55 +27,20 @@ class _VisitorHomeState extends State<VisitorHome> {
   bool _loading = true;
   String? _error;
 
-  static const _tiles = <(String, String, IconData, String)>[
-    (
-      'PARK MAP',
-      'Find rides & facilities',
-      LucideIcons.mapPinned,
-      'exploreParkMapImageUrl',
-    ),
-    (
-      'LIVE WAIT TIMES',
-      'See current ride queues',
-      LucideIcons.timer,
-      'exploreWaitTimesImageUrl',
-    ),
-    (
-      'RIDES & EVENTS',
-      'Rides, shows & water activities',
-      LucideIcons.ferrisWheel,
-      'exploreRidesImageUrl',
-    ),
-    (
-      'DINING & MENU',
-      'Food, menus & prices',
-      LucideIcons.utensils,
-      'exploreDiningImageUrl',
-    ),
-    (
-      'EVENTS',
-      'Shows, wave pool & rain dance',
-      LucideIcons.calendarDays,
-      'exploreRidesImageUrl',
-    ),
-    (
-      'RIDE GUIDELINES',
-      'Height limits & rules',
-      LucideIcons.ruler,
-      'exploreGuidelinesImageUrl',
-    ),
-    (
-      'SAFETY & HYGIENE',
-      'Plan a safe visit',
-      LucideIcons.shieldCheck,
-      'exploreSafetyImageUrl',
-    ),
-    (
-      'MAINTENANCE LOG',
-      'Ride service updates',
-      LucideIcons.wrench,
-      'exploreMaintenanceImageUrl',
-    ),
+  static const _tiles = <(String, IconData, String)>[
+    ('PARK MAP', LucideIcons.mapPinned, 'exploreParkMapImageUrl'),
+    ('LIVE WAIT TIMES', LucideIcons.timer, 'exploreWaitTimesImageUrl'),
+    ('RIDES & EVENTS', LucideIcons.ferrisWheel, 'exploreRidesImageUrl'),
+    ('DINING & MENU', LucideIcons.utensils, 'exploreDiningImageUrl'),
+    ('OFFERS & PROMOTIONS', LucideIcons.badgePercent, 'exploreRidesImageUrl'),
+    ('MY BOOKINGS', LucideIcons.ticketCheck, ''),
+  ];
+
+  static const _moreSections = [
+    'EVENTS',
+    'RIDE GUIDELINES',
+    'SAFETY & HYGIENE',
+    'MAINTENANCE LOG',
   ];
 
   @override
@@ -159,6 +124,26 @@ class _VisitorHomeState extends State<VisitorHome> {
     return '${_api.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
   }
 
+  String _waitStatus(Map<String, dynamic> config) {
+    final waits = config['liveWaitTimes'];
+    if (waits is! List || waits.isEmpty) return 'Live updates';
+    final minutes = waits
+        .whereType<Map>()
+        .map((item) => int.tryParse(item['time']?.toString() ?? ''))
+        .whereType<int>()
+        .toList();
+    if (minutes.isEmpty) return 'Live updates';
+    final average = minutes.reduce((a, b) => a + b) / minutes.length;
+    if (average < 15) return 'Short lines';
+    if (average < 30) return 'Moderate waits';
+    return 'Longer waits';
+  }
+
+  String _displayTitle(String value) => value
+      .split(' ')
+      .map((word) => '${word[0]}${word.substring(1).toLowerCase()}')
+      .join(' ');
+
   void _openSection(String section) {
     final cfg = _park;
     if (cfg == null) return;
@@ -193,13 +178,12 @@ class _VisitorHomeState extends State<VisitorHome> {
   }
 
   Widget _tileGrid(
-    List<(String, String, IconData, String)> tiles,
+    List<(String, IconData, String)> tiles,
     Map<String, dynamic> config, {
     required bool compact,
     required int delayOffset,
   }) {
-    final width = MediaQuery.sizeOf(context).width;
-    final columns = width < 720 ? 2 : 4;
+    const columns = 2;
     return GridView.builder(
       padding: EdgeInsets.zero,
       shrinkWrap: true,
@@ -207,20 +191,24 @@ class _VisitorHomeState extends State<VisitorHome> {
       itemCount: tiles.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
-        mainAxisExtent: compact ? 242 : 128,
-        crossAxisSpacing: compact ? 12 : 12,
-        mainAxisSpacing: compact ? 14 : 10,
+        childAspectRatio: compact ? .84 : .9,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 18,
       ),
       itemBuilder: (context, index) {
         final tile = tiles[index];
-        return _ExploreTile(
+        final title = tile.$1;
+        return ShortcutCard(
           title: tile.$1,
-          subtitle: tile.$2,
-          icon: tile.$3,
-          imageUrl: _imageUrl(config[tile.$4]?.toString()),
+          icon: tile.$2,
+          imageUrl: _imageUrl(config[tile.$3]?.toString()),
           delay: (delayOffset + index) * 45,
-          compact: compact,
-          onTap: () => _openSection(tile.$1),
+          compact: true,
+          isLive: title == 'PARK MAP' || title == 'LIVE WAIT TIMES',
+          statusLabel: title == 'LIVE WAIT TIMES' ? _waitStatus(config) : null,
+          onTap: title == 'OFFERS & PROMOTIONS' || title == 'MY BOOKINGS'
+              ? null
+              : () => _openSection(title),
         );
       },
     );
@@ -276,9 +264,9 @@ class _VisitorHomeState extends State<VisitorHome> {
                         40,
                       ),
                       decoration: const BoxDecoration(
-                        color: Colors.white,
+                        color: Color(0xffeef2f8),
                         borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(36),
+                          top: Radius.circular(42),
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -314,28 +302,42 @@ class _VisitorHomeState extends State<VisitorHome> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 20),
                           _tileGrid(
-                            _tiles.take(4).toList(),
+                            _tiles,
                             cfg,
                             compact: MediaQuery.sizeOf(context).width < 520,
                             delayOffset: 0,
                           ),
+                          const SizedBox(height: 26),
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'MORE PARK INFO',
+                              style: TextStyle(
+                                color: wonderlaMuted,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: .8,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              for (final section in _moreSections)
+                                ActionChip(
+                                  label: Text(_displayTitle(section)),
+                                  onPressed: () => _openSection(section),
+                                  backgroundColor: Colors.white,
+                                  side: BorderSide.none,
+                                ),
+                            ],
+                          ),
                         ],
                       ),
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: compactHome ? 14 : 22,
-                    ),
-                    child: _tileGrid(
-                      _tiles.skip(4).toList(),
-                      cfg,
-                      compact: MediaQuery.sizeOf(context).width < 520,
-                      delayOffset: 4,
                     ),
                   ),
                 ),
@@ -635,22 +637,27 @@ class _HeroCard extends StatelessWidget {
   );
 }
 
-class _ExploreTile extends StatelessWidget {
-  const _ExploreTile({
+class ShortcutCard extends StatelessWidget {
+  const ShortcutCard({
+    super.key,
     required this.title,
-    required this.subtitle,
     required this.icon,
     required this.imageUrl,
     required this.delay,
     required this.compact,
+    this.isLive = false,
+    this.statusLabel,
     required this.onTap,
   });
-  final String title, subtitle;
+
+  final String title;
   final String imageUrl;
   final IconData icon;
   final int delay;
   final bool compact;
-  final VoidCallback onTap;
+  final bool isLive;
+  final String? statusLabel;
+  final VoidCallback? onTap;
 
   String _titleCase(String value) => value
       .split(' ')
@@ -661,11 +668,11 @@ class _ExploreTile extends StatelessWidget {
       )
       .join(' ');
 
-  Widget _tileImage({required double iconSize}) {
+  Widget _tileImage() {
     Widget fallback() => Container(
       color: const Color(0xffe9efff),
       alignment: Alignment.center,
-      child: Icon(icon, color: wonderlaCobalt, size: iconSize),
+      child: Icon(icon, color: wonderlaCobalt, size: compact ? 44 : 58),
     );
     if (imageUrl.isEmpty) return fallback();
     return Image.network(
@@ -683,151 +690,126 @@ class _ExploreTile extends StatelessWidget {
     builder: (context, value, child) =>
         Transform.scale(scale: value, child: child),
     child: Material(
-      color: _white,
-      borderRadius: BorderRadius.circular(compact ? 25 : 20),
+      color: Colors.white,
+      elevation: 3,
+      shadowColor: const Color(0x24071a3d),
+      borderRadius: BorderRadius.circular(24),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(compact ? 25 : 20),
-        child: Container(
-          padding: EdgeInsets.all(compact ? 11 : 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(compact ? 25 : 20),
-          ),
-          child: compact
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(19),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            _tileImage(iconSize: 44),
-                            if (title == 'PARK MAP' ||
-                                title == 'LIVE WAIT TIMES')
-                              Positioned(
-                                top: 12,
-                                left: 12,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xffe84642),
-                                    borderRadius: BorderRadius.circular(9),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.circle,
-                                        color: Colors.white,
-                                        size: 7,
-                                      ),
-                                      SizedBox(width: 5),
-                                      Text(
-                                        'LIVE',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: .3,
-                                        ),
-                                      ),
-                                    ],
+        child: Padding(
+          padding: EdgeInsets.all(compact ? 10 : 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _tileImage(),
+                      if (isLive)
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xffe84642),
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.circle,
+                                  color: Colors.white,
+                                  size: 7,
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  'LIVE',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: .3,
                                   ),
                                 ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _titleCase(title),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: _navy,
-                              fontSize: 17,
-                              height: 1.15,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -.1,
+                              ],
                             ),
                           ),
                         ),
-                        const SizedBox(width: 4),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: compact ? 8 : 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _titleCase(title),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: compact ? 17 : 20,
+                        height: 1.12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -.25,
+                      ),
+                    ),
+                  ),
+                  if (title == 'PARK MAP')
+                    const Icon(
+                      Icons.north_east_rounded,
+                      color: _navy,
+                      size: 21,
+                    ),
+                ],
+              ),
+              if (statusLabel != null) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffedf0f5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                         const Icon(
-                          Icons.arrow_forward_rounded,
-                          color: wonderlaCobalt,
-                          size: 19,
+                          Icons.bar_chart_rounded,
+                          size: 14,
+                          color: wonderlaMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          statusLabel!,
+                          style: const TextStyle(
+                            color: _navy,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
-                  ],
-                )
-              : Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        width: 60,
-                        height: 60,
-                        child: _tileImage(iconSize: 27),
-                      ),
-                    ),
-                    SizedBox(width: compact ? 8 : 13),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _titleCase(title),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: _navy,
-                              fontSize: compact ? 13 : 15,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -.15,
-                            ),
-                          ),
-                          SizedBox(height: compact ? 3 : 6),
-                          Text(
-                            subtitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: wonderlaNavy,
-                              fontSize: compact ? 12 : 14,
-                              height: 1.3,
-                              letterSpacing: .05,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: compact ? 30 : 36,
-                      height: compact ? 30 : 36,
-                      decoration: BoxDecoration(
-                        color: wonderlaCream,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.arrow_forward_rounded,
-                        color: wonderlaCobalt,
-                        size: compact ? 16 : 19,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
+              ],
+            ],
+          ),
         ),
       ),
     ),
