@@ -457,7 +457,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   }
 
   Future<void> _savePark() async {
-    if (_config == null) return;
+    if (_config == null || !_canAccess(_section)) return;
     setState(() {
       _saving = true;
       _error = null;

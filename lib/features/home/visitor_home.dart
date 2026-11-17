@@ -319,38 +319,6 @@ class _VisitorHomeState extends State<VisitorHome> {
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      compactHome ? 16 : 22,
-                      0,
-                      compactHome ? 16 : 22,
-                      14,
-                    ),
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'More to explore',
-                            style: TextStyle(
-                              color: _navy,
-                              fontSize: 19,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '${_tiles.length - 4} guides',
-                          style: const TextStyle(
-                            color: wonderlaMuted,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: compactHome ? 14 : 22,
                     ),
@@ -613,7 +581,7 @@ class _HeroCard extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white,
