@@ -207,9 +207,9 @@ class _VisitorHomeState extends State<VisitorHome> {
       itemCount: tiles.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
-        mainAxisExtent: compact ? 140 : 128,
-        crossAxisSpacing: compact ? 8 : 12,
-        mainAxisSpacing: 10,
+        mainAxisExtent: compact ? 242 : 128,
+        crossAxisSpacing: compact ? 12 : 12,
+        mainAxisSpacing: compact ? 14 : 10,
       ),
       itemBuilder: (context, index) {
         final tile = tiles[index];
@@ -298,17 +298,17 @@ class _VisitorHomeState extends State<VisitorHome> {
                                   'Explore Wonderla',
                                   style: TextStyle(
                                     color: _navy,
-                                    fontSize: compactHome ? 21 : 24,
+                                    fontSize: compactHome ? 25 : 29,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: -.5,
                                   ),
                                 ),
                               ),
                               Text(
-                                '4 shortcuts',
+                                'All shortcuts',
                                 style: TextStyle(
                                   color: wonderlaMuted,
-                                  fontSize: compactHome ? 11 : 12,
+                                  fontSize: compactHome ? 13 : 14,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -543,7 +543,7 @@ class _HeroCard extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final compact = constraints.maxWidth < 560;
-      final cardHeight = compact ? 232.0 : 280.0;
+      final cardHeight = compact ? 320.0 : 360.0;
       return Container(
         height: cardHeight,
         width: double.infinity,
@@ -684,21 +684,64 @@ class _ExploreTile extends StatelessWidget {
         Transform.scale(scale: value, child: child),
     child: Material(
       color: _white,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(compact ? 25 : 20),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 25 : 20),
         child: Container(
-          padding: EdgeInsets.all(compact ? 8 : 10),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+          padding: EdgeInsets.all(compact ? 11 : 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(compact ? 25 : 20),
+          ),
           child: compact
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(11),
-                        child: _tileImage(iconSize: 28),
+                        borderRadius: BorderRadius.circular(19),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _tileImage(iconSize: 44),
+                            if (title == 'PARK MAP' ||
+                                title == 'LIVE WAIT TIMES')
+                              Positioned(
+                                top: 12,
+                                left: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xffe84642),
+                                    borderRadius: BorderRadius.circular(9),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.circle,
+                                        color: Colors.white,
+                                        size: 7,
+                                      ),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'LIVE',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: .3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -711,7 +754,7 @@ class _ExploreTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: _navy,
-                              fontSize: 12.5,
+                              fontSize: 17,
                               height: 1.15,
                               fontWeight: FontWeight.w800,
                               letterSpacing: -.1,
@@ -722,7 +765,7 @@ class _ExploreTile extends StatelessWidget {
                         const Icon(
                           Icons.arrow_forward_rounded,
                           color: wonderlaCobalt,
-                          size: 17,
+                          size: 19,
                         ),
                       ],
                     ),
