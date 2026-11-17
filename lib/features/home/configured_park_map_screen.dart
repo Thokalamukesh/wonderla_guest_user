@@ -5,7 +5,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../park_map/park_map_screen.dart';
 import '../park_map/models/map_place.dart';
 import '../park_map/models/park_map_config.dart';
 import '../park_map/models/wonderla_location_catalog.dart';
@@ -45,11 +44,12 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   LatLng? _visitorPosition;
   Map<String, dynamic>? _selected;
   WalkingRoute? _route;
-  RouteMode _routeMode = RouteMode.walking;
+  final RouteMode _routeMode = RouteMode.walking;
   bool _gpsLoading = false;
   bool _routing = false;
   bool _mapReady = false;
   bool _showLayout = false;
+  int _mapSize = 1; // 0: compact, 1: half, 2: full
   int _routeRequestId = 0;
   String? _locationMessage;
   String? _routeError;
@@ -377,119 +377,103 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         ),
         titleSpacing: 0,
         title: _searchBox(),
-        actions: [
-          PopupMenuButton<RouteMode>(
-            tooltip: 'Travel mode',
-            initialValue: _routeMode,
-            onSelected: (mode) {
-              setState(() => _routeMode = mode);
-              final selected = _selected;
-              if (selected != null) _requestDirections(selected);
-            },
-            icon: Icon(
-              _routeMode == RouteMode.walking
-                  ? Icons.directions_walk_rounded
-                  : Icons.directions_car_rounded,
-            ),
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: RouteMode.walking, child: Text('Walking')),
-              PopupMenuItem(value: RouteMode.driving, child: Text('Driving')),
-            ],
-          ),
-        ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final map = _mapPanel(image, places);
-              final locations = _placeTray(places);
-              if (constraints.maxWidth >= 760) {
-                return Row(
-                  children: [
-                    Expanded(flex: 11, child: map),
-                    const SizedBox(width: 12),
-                    Expanded(flex: 9, child: locations),
-                  ],
-                );
-              }
-              return Column(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final map = _mapPanel(image, places);
+            final locations = _placeTray(places);
+            if (constraints.maxWidth >= 760) {
+              return Row(
                 children: [
-                  Expanded(child: map),
-                  const SizedBox(height: 10),
-                  Expanded(child: locations),
+                  Expanded(flex: 11, child: map),
+                  Expanded(flex: 9, child: locations),
                 ],
               );
-            },
-          ),
+            }
+            if (_mapSize == 2) return map;
+            return Column(
+              children: [
+                Expanded(flex: _mapSize == 0 ? 1 : 2, child: map),
+                Expanded(flex: _mapSize == 0 ? 2 : 3, child: locations),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _mapPanel(
-    String image,
-    List<Map<String, dynamic>> places,
-  ) => ClipRRect(
-    borderRadius: BorderRadius.circular(18),
-    child: Stack(
-      fit: StackFit.expand,
-      children: [
-        _showLayout ? _layoutMap(image) : _liveMap(places),
+  Widget _mapPanel(String image, List<Map<String, dynamic>> places) => Stack(
+    fit: StackFit.expand,
+    children: [
+      _showLayout ? _layoutMap(image) : _liveMap(places),
+      if (MediaQuery.sizeOf(context).width < 760)
         Positioned(
-          top: 76,
-          right: 12,
-          child: Column(
-            children: [
-              _mapAction(
-                Icons.my_location_rounded,
-                _locateVisitor,
-                tooltip: 'Center on my live location',
-                loading: _gpsLoading,
-              ),
-              if (image.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                _mapAction(
-                  _showLayout ? Icons.map_rounded : Icons.image_outlined,
-                  () => setState(() => _showLayout = !_showLayout),
-                  tooltip: _showLayout ? 'Show live map' : 'Show park layout',
-                ),
+          top: 10,
+          left: 10,
+          child: Material(
+            color: Colors.white.withValues(alpha: .95),
+            borderRadius: BorderRadius.circular(24),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _mapSizeButton(0, Icons.expand_more, 'Minimize map'),
+                _mapSizeButton(1, Icons.vertical_align_center, 'Half-size map'),
+                _mapSizeButton(2, Icons.open_in_full, 'Full-screen map'),
               ],
-              if (widget.config['slug'] == 'bengaluru') ...[
-                const SizedBox(height: 8),
-                _mapAction(
-                  Icons.directions_walk_rounded,
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ParkMapScreen()),
-                  ),
-                  tooltip: 'Open walking directions map',
-                ),
-              ],
-            ],
+            ),
           ),
         ),
-        if (_routing)
-          const Positioned(
-            top: 70,
-            left: 12,
-            right: 12,
-            child: LinearProgressIndicator(color: _mapNavy, minHeight: 3),
-          ),
-        if (_routeError != null)
-          Positioned(
-            top: 82,
-            left: 0,
-            right: 58,
-            child: _routeNotice(_routeError!),
-          )
-        else if (_locationMessage != null && !_gpsLoading)
-          Positioned(top: 82, left: 0, right: 58, child: _locationBanner()),
-        if (_route != null)
-          Positioned(left: 12, bottom: 12, child: _routeSummary(_route!)),
-      ],
-    ),
+      Positioned(
+        top: 60,
+        right: 12,
+        child: Column(
+          children: [
+            _mapAction(
+              Icons.my_location_rounded,
+              _locateVisitor,
+              tooltip: 'Center on my live location',
+              loading: _gpsLoading,
+            ),
+            if (image.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _mapAction(
+                _showLayout ? Icons.map_rounded : Icons.image_outlined,
+                () => setState(() => _showLayout = !_showLayout),
+                tooltip: _showLayout ? 'Show live map' : 'Show park layout',
+              ),
+            ],
+          ],
+        ),
+      ),
+      if (_routing)
+        const Positioned(
+          top: 70,
+          left: 12,
+          right: 12,
+          child: LinearProgressIndicator(color: _mapNavy, minHeight: 3),
+        ),
+      if (_routeError != null)
+        Positioned(
+          top: 82,
+          left: 0,
+          right: 58,
+          child: _routeNotice(_routeError!),
+        )
+      else if (_locationMessage != null && !_gpsLoading)
+        Positioned(top: 82, left: 0, right: 58, child: _locationBanner()),
+      if (_route != null)
+        Positioned(left: 12, bottom: 12, child: _routeSummary(_route!)),
+    ],
+  );
+
+  Widget _mapSizeButton(int size, IconData icon, String tooltip) => IconButton(
+    tooltip: tooltip,
+    visualDensity: VisualDensity.compact,
+    onPressed: () => setState(() => _mapSize = size),
+    color: _mapSize == size ? _mapNavy : wonderlaNavy,
+    icon: Icon(icon),
   );
 
   Widget _mapAction(

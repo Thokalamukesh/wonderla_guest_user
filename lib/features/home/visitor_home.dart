@@ -33,8 +33,8 @@ class _VisitorHomeState extends State<VisitorHome> {
       'exploreParkMapImageUrl',
     ),
     (
-      'RIDES & EVENTS',
-      'Explore rides and shows',
+      'RIDES & WATER ACTIVITIES',
+      'Explore rides and water activities',
       LucideIcons.ferrisWheel,
       'exploreRidesImageUrl',
     ),
@@ -45,22 +45,16 @@ class _VisitorHomeState extends State<VisitorHome> {
       'exploreDiningImageUrl',
     ),
     (
-      'LIVE WAIT TIMES',
-      'Current ride queues',
-      LucideIcons.timer,
-      'exploreWaitTimesImageUrl',
+      'EVENTS',
+      'Shows, wave pool & rain dance',
+      LucideIcons.calendarDays,
+      'exploreRidesImageUrl',
     ),
     (
       'RIDE GUIDELINES',
       'Height limits & rules',
       LucideIcons.ruler,
       'exploreGuidelinesImageUrl',
-    ),
-    (
-      'WAVE POOL & RAIN DANCE',
-      'Sessions & timings',
-      LucideIcons.waves,
-      'exploreWaveImageUrl',
     ),
     (
       'SAFETY & HYGIENE',
@@ -847,19 +841,20 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
   );
 
   List<Widget> _content() => switch (widget.title) {
-    'RIDES & EVENTS' => _ridesEvents(),
+    'RIDES & WATER ACTIVITIES' => _ridesEvents(),
+    'EVENTS' => _events(),
     'DINING & MENU' => _dining(),
-    'LIVE WAIT TIMES' => _waitTimes(),
     'RIDE GUIDELINES' => _guidelines(),
-    'WAVE POOL & RAIN DANCE' => _wave(),
     'SAFETY & HYGIENE' => _safety(),
     'MAINTENANCE LOG' => _maintenance(),
     _ => [const SizedBox.shrink()],
   };
 
   List<Widget> _ridesEvents() {
-    final rides = _list('rides'), events = _list('events');
-    final items = _rideTab == 'Rides' ? rides : events;
+    final rides = _list('rides');
+    final water = _list('waveRainDance');
+    final tabLabels = ['Rides', 'Water activities', 'Live wait time'];
+    final items = _rideTab == 'Rides' ? rides : water;
     final tabs = Container(
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
@@ -868,7 +863,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
       ),
       child: Row(
         children: [
-          for (final tab in ['Rides', 'Events'])
+          for (final tab in tabLabels)
             Expanded(
               child: InkWell(
                 onTap: () => setState(() => _rideTab = tab),
@@ -883,7 +878,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: _rideTab == tab ? Colors.white : wonderlaNavy,
-                      fontSize: 17,
+                      fontSize: 12,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -896,10 +891,56 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
     return [
       tabs,
       const SizedBox(height: 14),
-      if (items.isEmpty) _empty(_rideTab),
-      for (final item in items) _mediaCard(item, event: _rideTab == 'Events'),
+      if (_rideTab == 'Live wait time') ..._waitTimes(),
+      if (_rideTab != 'Live wait time' && items.isEmpty) _empty(_rideTab),
+      if (_rideTab == 'Water activities') ..._wave(),
+      if (_rideTab == 'Rides')
+        for (final item in rides) _mediaCard(item),
     ];
   }
+
+  List<Widget> _events() => [
+    if (_list('events').isEmpty && _list('waveRainDance').isEmpty)
+      _empty('Events'),
+    for (final item in _list('events')) _mediaCard(item, event: true),
+    for (final item in _list('waveRainDance')) _eventWaterCard(item),
+  ];
+
+  Widget _eventWaterCard(Map<String, dynamic> item) => Card(
+    color: Colors.white,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _wideImage(item['img']?.toString()),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item['title']?.toString() ?? '',
+                style: const TextStyle(
+                  color: _navy,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text('Duration: ${item['rideDuration'] ?? 0} minutes'),
+              Wrap(
+                spacing: 7,
+                children: [
+                  for (final t in List<String>.from(
+                    item['timeSlot'] as List? ?? const [],
+                  ))
+                    Chip(label: Text(t), backgroundColor: wonderlaWhite),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 
   List<Widget> _dining() {
     final outlets = _list('dining');
@@ -1299,6 +1340,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
       ),
   ];
   List<Widget> _wave() => [
+    if (_list('waveRainDance').isEmpty) _empty('Water activities'),
     for (final item in _list('waveRainDance'))
       Card(
         color: Colors.white,

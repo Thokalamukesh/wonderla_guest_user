@@ -1,10 +1,13 @@
 import 'dart:typed_data';
+import 'dart:ui' show ImageByteFormat;
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import 'cms_api.dart';
+import 'qr_download.dart';
 import '../../shared/scroll_reveal.dart';
 import '../../shared/wonderla_palette.dart';
 
@@ -388,8 +391,17 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   String? _notice;
 
   bool get _super => widget.user['role'] == 'superadmin';
+  List<String> get _permissions => List<String>.from(
+    widget.user['permissions'] as List? ?? const <String>[],
+  );
+  bool _canAccess(String section) =>
+      _super ||
+      widget.user['permissions'] == null ||
+      _permissions.contains('all') ||
+      _permissions.contains(section);
   bool get _canSave =>
       _config != null &&
+      _canAccess(_section) &&
       _section != 'Users' &&
       _section != 'Google Maps settings' &&
       _section != 'Site URL & QR codes';
@@ -630,12 +642,13 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             children: [
               for (final (name, icon) in _sections)
                 if (_super ||
-                    !{
-                      'Parks',
-                      'Users',
-                      'Google Maps settings',
-                      'Site URL & QR codes',
-                    }.contains(name))
+                    (_canAccess(name) &&
+                        !{
+                          'Parks',
+                          'Users',
+                          'Google Maps settings',
+                          'Site URL & QR codes',
+                        }.contains(name)))
                   _navItem(name, icon),
             ],
           ),
@@ -730,12 +743,13 @@ class _AdminDashboardState extends State<_AdminDashboard> {
       children: [
         for (final (title, icon) in _sections)
           if (_super ||
-              !{
-                'Parks',
-                'Users',
-                'Google Maps settings',
-                'Site URL & QR codes',
-              }.contains(title))
+              (_canAccess(title) &&
+                  !{
+                    'Parks',
+                    'Users',
+                    'Google Maps settings',
+                    'Site URL & QR codes',
+                  }.contains(title)))
             Padding(
               padding: const EdgeInsets.only(right: 7),
               child: ChoiceChip(
@@ -804,13 +818,15 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         const SizedBox(height: 18),
         if (_section == 'Park overview') ScrollReveal(child: _overview()),
         if (_section == 'Parks') ScrollReveal(child: _parksPage()),
-        if (_listKeys.containsKey(_section))
+        if (_listKeys.containsKey(_section) && _canAccess(_section))
           ScrollReveal(child: _collectionPage()),
-        if (_section == 'Park map & places') ScrollReveal(child: _mapPage()),
+        if (_section == 'Park map & places' && _canAccess(_section))
+          ScrollReveal(child: _mapPage()),
         if (_section == 'Google Maps settings')
           ScrollReveal(child: _googleMapSettings()),
         if (_section == 'Users') ScrollReveal(child: _usersPage()),
-        if (_section == 'Site URL & QR codes')
+        if (_section == 'Site URL & QR codes' &&
+            (_super || _permissions.isEmpty))
           ScrollReveal(child: _siteUrlPage()),
       ],
     );
@@ -1009,6 +1025,11 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             trailing: Wrap(
               spacing: 4,
               children: [
+                IconButton(
+                  tooltip: 'Show and download QR code',
+                  onPressed: () => _showParkQr(p),
+                  icon: const Icon(Icons.qr_code_2, color: _brandNavy),
+                ),
                 if (_super)
                   IconButton(
                     tooltip: 'Delete park',
@@ -1338,6 +1359,50 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _showParkQr(Map<String, dynamic> park) async {
+    final slug = park['slug']?.toString() ?? '';
+    final url = '${widget.api.baseUrl}/qr-code/$slug';
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${park['name'] ?? 'Park'} QR code'),
+        content: SizedBox(
+          width: 280,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              QrImageView(data: url, version: QrVersions.auto, size: 220),
+              const SizedBox(height: 8),
+              SelectableText(url, textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              final data = await QrPainter(
+                data: url,
+                version: QrVersions.auto,
+              ).toImageData(1024, format: ImageByteFormat.png);
+              if (data == null) return;
+              await downloadQrPng(
+                data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+                'wonderla-$slug-qr.png',
+              );
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            },
+            icon: const Icon(Icons.download),
+            label: const Text('Download PNG'),
+          ),
+        ],
       ),
     );
   }
@@ -2305,6 +2370,20 @@ class _UsersManagerState extends State<_UsersManager> {
   final _username = TextEditingController();
   final _password = TextEditingController();
   String _role = 'park';
+  bool _allAccess = true;
+  final Set<String> _selectedAccess = {};
+  static const _accessSections = [
+    'Park overview',
+    'Rides',
+    'Events',
+    'Dining & menus',
+    'Live wait times',
+    'Wave pool & rain dance',
+    'Safety & hygiene',
+    'Maintenance log',
+    'Ride guidelines',
+    'Park map & places',
+  ];
   String? _park;
   bool _busy = false;
   String? _error;
@@ -2332,6 +2411,8 @@ class _UsersManagerState extends State<_UsersManager> {
         'password': _password.text,
         'role': _role,
         if (_role == 'park') 'parkSlug': _park,
+        if (_role == 'park')
+          'permissions': _allAccess ? ['all'] : _selectedAccess.toList(),
       });
       _username.clear();
       _password.clear();
@@ -2470,6 +2551,33 @@ class _UsersManagerState extends State<_UsersManager> {
                     onChanged: (v) => setState(() => _park = v),
                   ),
                 ),
+              if (_role == 'park') ...[
+                const SizedBox(height: 14),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Access to all sections'),
+                  subtitle: const Text('Turn off to choose specific sections.'),
+                  value: _allAccess,
+                  onChanged: (value) => setState(() => _allAccess = value),
+                ),
+                if (!_allAccess)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 2,
+                    children: [
+                      for (final section in _accessSections)
+                        FilterChip(
+                          label: Text(section),
+                          selected: _selectedAccess.contains(section),
+                          onSelected: (selected) => setState(() {
+                            selected
+                                ? _selectedAccess.add(section)
+                                : _selectedAccess.remove(section);
+                          }),
+                        ),
+                    ],
+                  ),
+              ],
               if (_error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
