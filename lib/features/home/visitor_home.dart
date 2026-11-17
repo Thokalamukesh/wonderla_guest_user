@@ -190,6 +190,40 @@ class _VisitorHomeState extends State<VisitorHome> {
     );
   }
 
+  Widget _tileGrid(
+    List<(String, String, IconData, String)> tiles,
+    Map<String, dynamic> config, {
+    required bool compact,
+    required int delayOffset,
+  }) {
+    final width = MediaQuery.sizeOf(context).width;
+    final columns = width < 720 ? 2 : 4;
+    return GridView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: tiles.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        mainAxisExtent: compact ? 158 : 144,
+        crossAxisSpacing: compact ? 10 : 14,
+        mainAxisSpacing: 12,
+      ),
+      itemBuilder: (context, index) {
+        final tile = tiles[index];
+        return _ExploreTile(
+          title: tile.$1,
+          subtitle: tile.$2,
+          icon: tile.$3,
+          imageUrl: _imageUrl(config[tile.$4]?.toString()),
+          delay: (delayOffset + index) * 45,
+          compact: compact,
+          onTap: () => _openSection(tile.$1),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final requestedSlug = _requestedSlug();
@@ -210,6 +244,10 @@ class _VisitorHomeState extends State<VisitorHome> {
     if (_park == null) return _directory();
     final cfg = _park!;
     final compactHome = MediaQuery.sizeOf(context).width < 390;
+    final parkName = cfg['name']?.toString() ?? 'Wonderla';
+    final heroTitle = parkName.toLowerCase().contains('wonderla')
+        ? parkName
+        : 'Wonderla $parkName';
     return Scaffold(
       backgroundColor: _pale,
       body: SafeArea(
@@ -219,156 +257,109 @@ class _VisitorHomeState extends State<VisitorHome> {
             child: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      compactHome ? 16 : 20,
-                      8,
-                      compactHome ? 16 : 20,
-                      18,
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Image.asset(
-                              'assets/images/wonderla_logo.webp',
-                              width: compactHome ? 158 : 184,
-                              height: 56,
-                              fit: BoxFit.contain,
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: wonderlaBorder),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.park_rounded,
+                  child: _HeroCard(
+                    name: heroTitle,
+                    location: cfg['location']?.toString() ?? '',
+                    imageUrl: _imageUrl(cfg['heroImageUrl']?.toString()),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Transform.translate(
+                    offset: const Offset(0, -20),
+                    child: Container(
+                      padding: EdgeInsets.fromLTRB(
+                        compactHome ? 14 : 22,
+                        20,
+                        compactHome ? 14 : 22,
+                        40,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(26),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Explore Wonderla',
+                                  style: TextStyle(
                                     color: _navy,
-                                    size: 15,
+                                    fontSize: compactHome ? 21 : 24,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -.5,
                                   ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    'PARK GUIDE',
-                                    style: TextStyle(
-                                      color: _navy,
-                                      fontSize: compactHome ? 9 : 10,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: .55,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        _HeroCard(
-                          name: 'WONDERLA',
-                          location:
-                              cfg['name']?.toString() ??
-                              cfg['location']?.toString() ??
-                              '',
-                          imageUrl: _imageUrl(cfg['heroImageUrl']?.toString()),
-                        ),
-                        const SizedBox(height: 22),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Explore Wonderla',
-                                    style: TextStyle(
-                                      color: _navy,
-                                      fontSize: compactHome ? 23 : 25,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: -.65,
-                                      height: 1.08,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Choose what you want to discover.',
-                                    style: TextStyle(
-                                      color: wonderlaMuted,
-                                      fontSize: 14,
-                                      height: 1.35,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: wonderlaBorder),
-                              ),
-                              child: Text(
-                                '${_tiles.length} guides',
-                                style: const TextStyle(
-                                  color: _navy,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
+                              Text(
+                                '4 shortcuts',
+                                style: TextStyle(
+                                  color: wonderlaMuted,
+                                  fontSize: compactHome ? 11 : 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          _tileGrid(
+                            _tiles.take(4).toList(),
+                            cfg,
+                            compact: MediaQuery.sizeOf(context).width < 520,
+                            delayOffset: 0,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      compactHome ? 16 : 22,
+                      0,
+                      compactHome ? 16 : 22,
+                      14,
+                    ),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'More to explore',
+                            style: TextStyle(
+                              color: _navy,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
                             ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 14),
+                        Text(
+                          '${_tiles.length - 4} guides',
+                          style: const TextStyle(
+                            color: wonderlaMuted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-                SliverPadding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: compactHome ? 16 : 20,
-                  ),
-                  sliver: SliverLayoutBuilder(
-                    builder: (context, constraints) {
-                      final width = constraints.crossAxisExtent;
-                      final compact = width < 520;
-                      // Keep cards wide enough for long labels such as
-                      // "Maintenance Log" on narrow browser and phone views.
-                      final columns = width < 720 ? 2 : (width < 1100 ? 3 : 4);
-                      return SliverGrid.builder(
-                        itemCount: _tiles.length,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: columns,
-                          mainAxisExtent: compact ? 158 : 144,
-                          crossAxisSpacing: compact ? 10 : 14,
-                          mainAxisSpacing: 12,
-                        ),
-                        itemBuilder: (context, i) {
-                          final tile = _tiles[i];
-                          return _ExploreTile(
-                            title: tile.$1,
-                            subtitle: tile.$2,
-                            icon: tile.$3,
-                            imageUrl: _imageUrl(cfg[tile.$4]?.toString()),
-                            delay: i * 55,
-                            compact: compact,
-                            onTap: () => _openSection(tile.$1),
-                          );
-                        },
-                      );
-                    },
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: compactHome ? 14 : 22,
+                    ),
+                    child: _tileGrid(
+                      _tiles.skip(4).toList(),
+                      cfg,
+                      compact: MediaQuery.sizeOf(context).width < 520,
+                      delayOffset: 4,
+                    ),
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -575,13 +566,13 @@ class _HeroCard extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final compact = constraints.maxWidth < 560;
-      final cardHeight = compact ? 178.0 : 205.0;
+      final cardHeight = compact ? 232.0 : 280.0;
       return Container(
         height: cardHeight,
         width: double.infinity,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(compact ? 0 : 26),
           color: wonderlaNavy,
           boxShadow: const [
             BoxShadow(
@@ -605,88 +596,58 @@ class _HeroCard extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0x10071a3d), Color(0xaa071a3d)],
+                  colors: [
+                    Color(0x99071a3d),
+                    Color(0x16071a3d),
+                    Color(0xb8071a3d),
+                  ],
                 ),
               ),
             ),
             Positioned(
-              right: compact ? 18 : 28,
-              top: compact ? 12 : 18,
-              child: Container(
-                width: compact ? 76 : 100,
-                height: compact ? 76 : 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: .22),
-                    width: compact ? 12 : 16,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: compact ? 18 : 25,
-              right: 16,
-              bottom: compact ? 15 : 20,
+              left: compact ? 20 : 30,
+              right: compact ? 20 : 30,
+              top: compact ? 22 : 30,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: wonderlaGold,
-                      border: Border.all(color: wonderlaGold),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: const Text(
-                      'THE FUN STARTS HERE',
-                      style: TextStyle(
-                        color: wonderlaNavy,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2,
-                        fontSize: 9,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: compact ? 8 : 11),
                   Text(
-                    'WELCOME TO\n${name.toUpperCase()}',
-                    maxLines: 2,
+                    name,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white,
-                      height: 1.02,
-                      fontSize: compact ? 24 : 29,
+                      height: 1.1,
+                      fontSize: compact ? 25 : 31,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -.65,
+                      letterSpacing: -.5,
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_rounded,
-                        color: wonderlaGold,
-                        size: 15,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          location,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: wonderlaWhite,
-                            fontSize: compact ? 13 : 15,
-                            fontWeight: FontWeight.w600,
+                  if (location.isNotEmpty) ...[
+                    const SizedBox(height: 7),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_rounded,
+                          color: wonderlaGold,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            location,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: wonderlaWhite,
+                              fontSize: compact ? 13 : 15,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
