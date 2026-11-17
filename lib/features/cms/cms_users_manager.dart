@@ -106,6 +106,33 @@ class _UsersManagerState extends State<_UsersManager> {
     }
   }
 
+  Future<void> _editAccess(Map<String, dynamic> user) async {
+    if (user['role'] != 'park' || user['username'] == widget.currentUsername) return;
+    final current = List<String>.from(user['permissions'] as List? ?? const ['all']);
+    var all = current.contains('all');
+    final selected = <String>{if (!all) ...current};
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, refresh) => AlertDialog(
+        title: Text('Access for ${user['username']}'),
+        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          SwitchListTile(title: const Text('All sections'), value: all, onChanged: (v) => refresh(() => all = v)),
+          if (!all) ..._accessSections.map((section) => CheckboxListTile(
+            dense: true, title: Text(section), value: selected.contains(section),
+            onChanged: (v) => refresh(() => v == true ? selected.add(section) : selected.remove(section)),
+          )),
+        ])),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(onPressed: !all && selected.isEmpty ? null : () => Navigator.pop(ctx, all ? ['all'] : selected.toList()), child: const Text('Save access'))],
+      )),
+    );
+    if (result == null) return;
+    try {
+      await widget.api.updateUserPermissions(user['username'] as String, result);
+      await widget.reload();
+    } catch (e) { setState(() => _error = e.toString()); }
+  }
+
   @override
   Widget build(BuildContext context) => Column(
     children: [
@@ -128,13 +155,16 @@ class _UsersManagerState extends State<_UsersManager> {
                 ),
                 trailing: u['username'] == widget.currentUsername
                     ? const Chip(label: Text('You'))
-                    : IconButton(
+                    : Row(mainAxisSize: MainAxisSize.min, children: [
+                      if (u['role'] == 'park') IconButton(tooltip: 'Edit section access', onPressed: () => _editAccess(u), icon: const Icon(Icons.tune_rounded)),
+                      IconButton(
                         onPressed: () => _delete(u['username'] as String),
                         icon: const Icon(
                           Icons.delete_outline,
                           color: wonderlaNavy,
                         ),
                       ),
+                    ]),
               ),
           ],
         ),

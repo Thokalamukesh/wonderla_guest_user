@@ -125,6 +125,10 @@ class CmsApi {
     await _json('/users/${Uri.encodeComponent(username)}', method: 'DELETE');
   }
 
+  Future<void> updateUserPermissions(String username, List<String> permissions) async {
+    await _json('/users/${Uri.encodeComponent(username)}', method: 'PATCH', body: {'permissions': permissions});
+  }
+
   Future<Map<String, dynamic>> mapSettings() async => _json('/map-settings');
   Future<void> saveMapSettings(String apiKey) async {
     await _json('/map-settings', method: 'PUT', body: {'apiKey': apiKey});

@@ -108,7 +108,6 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   );
   bool _canAccess(String section) =>
       _super ||
-      widget.user['permissions'] == null ||
       _permissions.contains('all') ||
       _permissions.contains(section);
   bool get _canSave =>
@@ -121,9 +120,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   @override
   void initState() {
     super.initState();
-    if (!_super &&
-        widget.user['permissions'] != null &&
-        !_canAccess(_section)) {
+    if (!_super && !_canAccess(_section)) {
       _section = _sections
           .map((section) => section.$1)
           .firstWhere(_canAccess, orElse: () => 'Park overview');
