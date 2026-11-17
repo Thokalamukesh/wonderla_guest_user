@@ -48,8 +48,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   bool _gpsLoading = false;
   bool _routing = false;
   bool _mapReady = false;
-  bool _showLayout = false;
-  int _mapSize = 1; // 0: compact, 1: half, 2: full
+  bool _mapExpanded = false;
   int _routeRequestId = 0;
   String? _locationMessage;
   String? _routeError;
@@ -61,12 +60,6 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       (e) => Map<String, dynamic>.from(e as Map),
     ),
   );
-  String _imageUrl(String? path) {
-    if (path == null || path.isEmpty) return '';
-    if (Uri.tryParse(path)?.hasScheme == true) return path;
-    return '${widget.baseUrl}${path.startsWith('/') ? '' : '/'}$path';
-  }
-
   String get _parkIdentity => [
     widget.config['slug'],
     widget.config['name'],
@@ -166,9 +159,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   void initState() {
     super.initState();
     _center = _configuredCenter;
-    // A configured park layout is a single image and appears faster than
-    // waiting for the live map's network tiles. Visitors can switch to live map.
-    _showLayout = _imageUrl(_map['img']?.toString()).isNotEmpty;
+    // Always open on the live map; the configured artwork can be slow or stale.
     final initialPosition = widget.initialPosition;
     if (initialPosition != null) {
       final point = LatLng(initialPosition.latitude, initialPosition.longitude);
@@ -259,10 +250,6 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
           _locationMessage =
               'You are outside the park area. Showing the park map.';
         }
-        if (_showLayout) {
-          _showLayout = false;
-          _mapReady = false;
-        }
         if (_visitorPosition != null) _watchVisitorPosition();
       }
     });
@@ -283,10 +270,6 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       _route = null;
       _routeError = null;
       _routing = false;
-      if (position != null && _showLayout) {
-        _showLayout = false;
-        _mapReady = false;
-      }
     });
     if (position == null) {
       setState(
@@ -363,7 +346,6 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
   @override
   Widget build(BuildContext context) {
     final places = _places;
-    final image = _imageUrl(_map['img']?.toString());
     return Scaffold(
       backgroundColor: _mapCanvas,
       appBar: AppBar(
@@ -381,7 +363,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final map = _mapPanel(image, places);
+            final map = _mapPanel(places);
             final locations = _placeTray(places);
             if (constraints.maxWidth >= 760) {
               return Row(
@@ -391,11 +373,11 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
                 ],
               );
             }
-            if (_mapSize == 2) return map;
+            if (_mapExpanded) return map;
             return Column(
               children: [
-                Expanded(flex: _mapSize == 0 ? 1 : 2, child: map),
-                Expanded(flex: _mapSize == 0 ? 2 : 3, child: locations),
+                Expanded(flex: 6, child: map),
+                Expanded(flex: 4, child: locations),
               ],
             );
           },
@@ -404,29 +386,32 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     );
   }
 
-  Widget _mapPanel(String image, List<Map<String, dynamic>> places) => Stack(
+  Widget _mapPanel(List<Map<String, dynamic>> places) => Stack(
     fit: StackFit.expand,
     children: [
-      _showLayout ? _layoutMap(image) : _liveMap(places),
+      _liveMap(places),
       if (MediaQuery.sizeOf(context).width < 760)
         Positioned(
-          top: 10,
+          top: 12,
           left: 10,
           child: Material(
-            color: Colors.white.withValues(alpha: .95),
-            borderRadius: BorderRadius.circular(24),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _mapSizeButton(0, Icons.expand_more, 'Minimize map'),
-                _mapSizeButton(1, Icons.vertical_align_center, 'Half-size map'),
-                _mapSizeButton(2, Icons.open_in_full, 'Full-screen map'),
-              ],
+            color: Colors.white,
+            elevation: 4,
+            shape: const CircleBorder(),
+            child: IconButton(
+              tooltip: _mapExpanded ? 'Minimize map' : 'Expand map',
+              onPressed: () => setState(() => _mapExpanded = !_mapExpanded),
+              icon: Icon(
+                _mapExpanded
+                    ? Icons.fullscreen_exit_rounded
+                    : Icons.fullscreen_rounded,
+                color: _mapNavy,
+              ),
             ),
           ),
         ),
       Positioned(
-        top: 60,
+        top: 12,
         right: 12,
         child: Column(
           children: [
@@ -436,14 +421,6 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
               tooltip: 'Center on my live location',
               loading: _gpsLoading,
             ),
-            if (image.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              _mapAction(
-                _showLayout ? Icons.map_rounded : Icons.image_outlined,
-                () => setState(() => _showLayout = !_showLayout),
-                tooltip: _showLayout ? 'Show live map' : 'Show park layout',
-              ),
-            ],
           ],
         ),
       ),
@@ -466,14 +443,6 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       if (_route != null)
         Positioned(left: 12, bottom: 12, child: _routeSummary(_route!)),
     ],
-  );
-
-  Widget _mapSizeButton(int size, IconData icon, String tooltip) => IconButton(
-    tooltip: tooltip,
-    visualDensity: VisualDensity.compact,
-    onPressed: () => setState(() => _mapSize = size),
-    color: _mapSize == size ? _mapNavy : wonderlaNavy,
-    icon: Icon(icon),
   );
 
   Widget _mapAction(
@@ -551,6 +520,7 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'maps_wonderla_flutter',
+          tileDisplay: const TileDisplay.instantaneous(),
         ),
         if (_route case final route?)
           PolylineLayer(
@@ -663,26 +633,6 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
     return Icons.attractions_rounded;
   }
 
-  Widget _layoutMap(String image) => InteractiveViewer(
-    minScale: .8,
-    maxScale: 4,
-    child: LayoutBuilder(
-      builder: (context, constraints) => SizedBox(
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              image,
-              fit: BoxFit.fill,
-              errorBuilder: (_, _, _) => _noLayout(),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
   Widget _placeTray(List<Map<String, dynamic>> places) {
     final query = _searchController.text.trim().toLowerCase();
     final visiblePlaces = query.isEmpty
@@ -1135,6 +1085,4 @@ class _ConfiguredParkMapScreenState extends State<ConfiguredParkMapScreen> {
       ),
     ),
   );
-  Widget _noLayout() =>
-      const Center(child: Text('Park layout image could not load.'));
 }

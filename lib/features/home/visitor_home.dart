@@ -228,40 +228,65 @@ class _VisitorHomeState extends State<VisitorHome> {
                               '',
                           imageUrl: _imageUrl(cfg['heroImageUrl']?.toString()),
                         ),
-                        const SizedBox(height: 28),
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Explore Wonderla',
-                            style: TextStyle(
-                              color: _navy,
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -.65,
-                              height: 1.08,
+                        const SizedBox(height: 22),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Explore Wonderla',
+                                    style: TextStyle(
+                                      color: _navy,
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -.65,
+                                      height: 1.08,
+                                    ),
+                                  ),
+                                  SizedBox(height: 5),
+                                  Text(
+                                    'Choose what you want to discover.',
+                                    style: TextStyle(
+                                      color: wonderlaMuted,
+                                      fontSize: 14,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Choose what you want to discover.',
-                            style: TextStyle(
-                              color: wonderlaMuted,
-                              fontSize: 15,
-                              height: 1.4,
-                              letterSpacing: .05,
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: wonderlaBorder),
+                              ),
+                              child: Text(
+                                '${_tiles.length} guides',
+                                style: const TextStyle(
+                                  color: _navy,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
                       ],
                     ),
                   ),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverLayoutBuilder(
                     builder: (context, constraints) {
                       final width = constraints.crossAxisExtent;
@@ -273,7 +298,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                         itemCount: _tiles.length,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: columns,
-                          mainAxisExtent: compact ? 108 : 136,
+                          mainAxisExtent: compact ? 112 : 136,
                           crossAxisSpacing: compact ? 10 : 14,
                           mainAxisSpacing: 12,
                         ),
@@ -637,22 +662,22 @@ class _ExploreTile extends StatelessWidget {
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-    tween: Tween(begin: .9, end: 1),
+    tween: Tween(begin: .96, end: 1),
     duration: Duration(milliseconds: 360 + delay),
-    curve: Curves.easeOutBack,
+    curve: Curves.easeOutCubic,
     builder: (context, value, child) =>
         Transform.scale(scale: value, child: child),
     child: Material(
       color: _white,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: EdgeInsets.all(compact ? 8 : 13),
+          padding: EdgeInsets.all(compact ? 10 : 13),
           decoration: BoxDecoration(
             border: Border.all(color: wonderlaBorder),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x0d071a3d),
