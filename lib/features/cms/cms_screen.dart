@@ -409,6 +409,13 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   @override
   void initState() {
     super.initState();
+    if (!_super &&
+        widget.user['permissions'] != null &&
+        !_canAccess(_section)) {
+      _section = _sections
+          .map((section) => section.$1)
+          .firstWhere(_canAccess, orElse: () => 'Park overview');
+    }
     _loadAll();
   }
 
@@ -467,6 +474,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   }
 
   Future<void> _changeSection(String value) async {
+    if (!_canAccess(value)) return;
     setState(() {
       _section = value;
       _error = null;
@@ -816,7 +824,8 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         ),
         if (_notice != null) _feedback(_notice!),
         const SizedBox(height: 18),
-        if (_section == 'Park overview') ScrollReveal(child: _overview()),
+        if (_section == 'Park overview' && _canAccess('Park overview'))
+          ScrollReveal(child: _overview()),
         if (_section == 'Parks') ScrollReveal(child: _parksPage()),
         if (_listKeys.containsKey(_section) && _canAccess(_section))
           ScrollReveal(child: _collectionPage()),
@@ -828,6 +837,11 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         if (_section == 'Site URL & QR codes' &&
             (_super || _permissions.isEmpty))
           ScrollReveal(child: _siteUrlPage()),
+        if (!_canAccess(_section))
+          const _EmptyCard(
+            'No access assigned',
+            'Ask an administrator to assign at least one section.',
+          ),
       ],
     );
   }
@@ -2387,6 +2401,7 @@ class _UsersManagerState extends State<_UsersManager> {
   String? _park;
   bool _busy = false;
   String? _error;
+
   @override
   void initState() {
     super.initState();
@@ -2591,7 +2606,10 @@ class _UsersManagerState extends State<_UsersManager> {
                 onPressed:
                     _busy ||
                         _username.text.trim().isEmpty ||
-                        _password.text.length < 6
+                        _password.text.length < 6 ||
+                        (_role == 'park' &&
+                            !_allAccess &&
+                            _selectedAccess.isEmpty)
                     ? null
                     : _create,
                 icon: const Icon(Icons.person_add_alt_1),

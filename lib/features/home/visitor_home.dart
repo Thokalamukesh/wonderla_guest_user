@@ -33,8 +33,14 @@ class _VisitorHomeState extends State<VisitorHome> {
       'exploreParkMapImageUrl',
     ),
     (
-      'RIDES & WATER ACTIVITIES',
-      'Explore rides and water activities',
+      'LIVE WAIT TIMES',
+      'See current ride queues',
+      LucideIcons.timer,
+      'exploreWaitTimesImageUrl',
+    ),
+    (
+      'RIDES & EVENTS',
+      'Rides, shows & water activities',
       LucideIcons.ferrisWheel,
       'exploreRidesImageUrl',
     ),
@@ -158,10 +164,19 @@ class _VisitorHomeState extends State<VisitorHome> {
       _openParkMap(cfg);
       return;
     }
+    final title = switch (section) {
+      'RIDES & EVENTS' || 'LIVE WAIT TIMES' => 'RIDES & WATER ACTIVITIES',
+      _ => section,
+    };
+    final initialTab = section == 'LIVE WAIT TIMES' ? 'Live wait time' : null;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            VisitorSectionScreen(title: section, config: cfg, api: _api),
+        builder: (_) => VisitorSectionScreen(
+          title: title,
+          config: cfg,
+          api: _api,
+          initialTab: initialTab,
+        ),
       ),
     );
   }
@@ -331,12 +346,12 @@ class _VisitorHomeState extends State<VisitorHome> {
                       final compact = width < 520;
                       // Keep cards wide enough for long labels such as
                       // "Maintenance Log" on narrow browser and phone views.
-                      final columns = width < 720 ? 1 : (width < 1100 ? 2 : 3);
+                      final columns = width < 720 ? 2 : (width < 1100 ? 3 : 4);
                       return SliverGrid.builder(
                         itemCount: _tiles.length,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: columns,
-                          mainAxisExtent: compact ? 112 : 136,
+                          mainAxisExtent: compact ? 158 : 144,
                           crossAxisSpacing: compact ? 10 : 14,
                           mainAxisSpacing: 12,
                         ),
@@ -698,6 +713,30 @@ class _ExploreTile extends StatelessWidget {
   final int delay;
   final bool compact;
   final VoidCallback onTap;
+
+  String _titleCase(String value) => value
+      .split(' ')
+      .map(
+        (word) => word == '&' || word.isEmpty
+            ? word
+            : '${word[0]}${word.substring(1).toLowerCase()}',
+      )
+      .join(' ');
+
+  Widget _tileImage({required double iconSize}) {
+    Widget fallback() => Container(
+      color: const Color(0xffe9efff),
+      alignment: Alignment.center,
+      child: Icon(icon, color: wonderlaCobalt, size: iconSize),
+    );
+    if (imageUrl.isEmpty) return fallback();
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => fallback(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => TweenAnimationBuilder<double>(
     tween: Tween(begin: .96, end: 1),
@@ -724,92 +763,100 @@ class _ExploreTile extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(compact ? 14 : 18),
-                child: SizedBox(
-                  width: compact ? 52 : 68,
-                  height: compact ? 52 : 68,
-                  child: imageUrl.isEmpty
-                      ? Container(
-                          color: const Color(0xffe9efff),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            icon,
-                            color: wonderlaCobalt,
-                            size: compact ? 25 : 30,
-                          ),
-                        )
-                      : Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            color: const Color(0xffe9efff),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              icon,
-                              color: wonderlaCobalt,
-                              size: compact ? 25 : 30,
+          child: compact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: _tileImage(iconSize: 34),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _titleCase(title),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: _navy,
+                              fontSize: 13,
+                              height: 1.15,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -.1,
                             ),
                           ),
                         ),
-                ),
-              ),
-              SizedBox(width: compact ? 8 : 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: wonderlaCobalt,
+                          size: 17,
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              : Row(
                   children: [
-                    Text(
-                      title
-                          .split(' ')
-                          .map(
-                            (word) => word == '&' || word.isEmpty
-                                ? word
-                                : '${word[0]}${word.substring(1).toLowerCase()}',
-                          )
-                          .join(' '),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: _navy,
-                        fontSize: compact ? 14 : 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -.15,
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: SizedBox(
+                        width: 68,
+                        height: 68,
+                        child: _tileImage(iconSize: 30),
                       ),
                     ),
-                    SizedBox(height: compact ? 3 : 6),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: wonderlaNavy,
-                        fontSize: compact ? 12 : 14,
-                        height: 1.3,
-                        letterSpacing: .05,
+                    SizedBox(width: compact ? 8 : 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _titleCase(title),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: _navy,
+                              fontSize: compact ? 14 : 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -.15,
+                            ),
+                          ),
+                          SizedBox(height: compact ? 3 : 6),
+                          Text(
+                            subtitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: wonderlaNavy,
+                              fontSize: compact ? 12 : 14,
+                              height: 1.3,
+                              letterSpacing: .05,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: compact ? 30 : 36,
+                      height: compact ? 30 : 36,
+                      decoration: BoxDecoration(
+                        color: wonderlaCream,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: wonderlaCobalt,
+                        size: compact ? 16 : 19,
                       ),
                     ),
                   ],
                 ),
-              ),
-              Container(
-                width: compact ? 30 : 36,
-                height: compact ? 30 : 36,
-                decoration: BoxDecoration(
-                  color: wonderlaCream,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  color: wonderlaCobalt,
-                  size: compact ? 16 : 19,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     ),
@@ -822,10 +869,12 @@ class VisitorSectionScreen extends StatefulWidget {
     required this.title,
     required this.config,
     required this.api,
+    this.initialTab,
   });
   final String title;
   final Map<String, dynamic> config;
   final CmsApi api;
+  final String? initialTab;
   @override
   State<VisitorSectionScreen> createState() => _VisitorSectionScreenState();
 }
@@ -834,12 +883,13 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
   late Map<String, dynamic> _config;
   bool _loading = false;
   String? _error;
-  String _rideTab = 'Rides';
+  late String _rideTab;
   String _menuFilter = 'All';
   @override
   void initState() {
     super.initState();
     _config = Map<String, dynamic>.from(widget.config);
+    _rideTab = widget.initialTab ?? 'Rides';
   }
 
   Future<void> _refresh() async {
