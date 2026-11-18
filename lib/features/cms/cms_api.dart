@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 
 import 'cms_http_client.dart';
+import 'fallback_parks_data.dart';
 
 final _httpClient = createCmsHttpClient();
 
@@ -15,6 +16,9 @@ class CmsApi {
   CmsApi({String? baseUrl}) : _baseUrl = baseUrl ?? _configuredBaseUrl();
 
   static const _definedBaseUrl = String.fromEnvironment('API_BASE_URL');
+  static const _defaultBackendOrigin =
+      'https://wonderla-qr-project.vercel.app';
+
   static String _configuredBaseUrl() {
     final override = _definedBaseUrl.trim();
     if (override.isNotEmpty) {
@@ -24,10 +28,10 @@ class CmsApi {
       if (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1') {
         return 'http://localhost:3000';
       }
-      // Production deployments can serve the API from the same origin.
+      // Production deployments can serve the API from the same origin (or via Vercel rewrites).
       return Uri.base.origin;
     }
-    return _definedBaseUrl;
+    return _defaultBackendOrigin;
   }
 
   String _baseUrl;
@@ -36,7 +40,8 @@ class CmsApi {
   set baseUrl(String value) =>
       _baseUrl = value.trim().replaceAll(RegExp(r'/$'), '');
   bool get isConfigured => _baseUrl.isNotEmpty;
-  Uri _uri(String path) => Uri.parse('$_baseUrl/qr-code/api$path');
+  Uri _uri(String path, {String? baseOverride}) =>
+      Uri.parse('${baseOverride ?? _baseUrl}/qr-code/api$path');
   Map<String, String> get _headers => {
     'Accept': 'application/json',
     'Cookie': ?_cookie,
@@ -51,10 +56,23 @@ class CmsApi {
       ..._headers,
       if (body != null) 'Content-Type': 'application/json',
     };
-    final request = http.Request(method, _uri(path))..headers.addAll(headers);
-    if (body != null) request.body = jsonEncode(body);
-    final response = await _httpClient.send(request);
-    final result = await http.Response.fromStream(response);
+    http.Response result = await _sendJsonRequest(
+      path,
+      method: method,
+      headers: headers,
+      body: body,
+    );
+    if (_looksLikeHtmlFallback(result) &&
+        _baseUrl != _defaultBackendOrigin &&
+        _definedBaseUrl.trim().isEmpty) {
+      _baseUrl = _defaultBackendOrigin;
+      result = await _sendJsonRequest(
+        path,
+        method: method,
+        headers: headers,
+        body: body,
+      );
+    }
     final data = _decodeJson(result);
     _saveCookie(result.headers);
     if (result.statusCode < 200 ||
@@ -67,13 +85,28 @@ class CmsApi {
     return data;
   }
 
+  Future<http.Response> _sendJsonRequest(
+    String path, {
+    required String method,
+    required Map<String, String> headers,
+    Object? body,
+  }) async {
+    final request = http.Request(method, _uri(path))..headers.addAll(headers);
+    if (body != null) request.body = jsonEncode(body);
+    final response = await _httpClient.send(request);
+    return http.Response.fromStream(response);
+  }
+
+  bool _looksLikeHtmlFallback(http.Response response) =>
+      response.body.trimLeft().startsWith('<');
+
   Map<String, dynamic> _decodeJson(http.Response response) {
     if (response.body.isEmpty) return <String, dynamic>{};
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) return decoded;
     } on FormatException {
-      if (response.body.trimLeft().startsWith('<')) {
+      if (_looksLikeHtmlFallback(response)) {
         throw CmsApiException(
           'Received an HTML response instead of JSON from ${response.request?.url ?? _baseUrl} (${response.statusCode}). Check your Vercel rewrites or API_BASE_URL.',
         );
@@ -109,11 +142,28 @@ class CmsApi {
     _cookie = null;
   }
 
-  Future<List<Map<String, dynamic>>> parks() async =>
-      List<Map<String, dynamic>>.from((await _json('/parks'))['parks'] as List);
-  Future<Map<String, dynamic>> park(String slug) async =>
-      (await _json('/parks/${Uri.encodeComponent(slug)}'))['config']
+  Future<List<Map<String, dynamic>>> parks() async {
+    try {
+      final list = List<Map<String, dynamic>>.from(
+        (await _json('/parks'))['parks'] as List,
+      );
+      if (list.isNotEmpty) return list;
+    } catch (_) {
+      // Fall back to embedded park list when the backend is unavailable or unseeded.
+    }
+    return FallbackParksData.listParks();
+  }
+
+  Future<Map<String, dynamic>> park(String slug) async {
+    try {
+      return (await _json('/parks/${Uri.encodeComponent(slug)}'))['config']
           as Map<String, dynamic>;
+    } catch (_) {
+      final fallback = FallbackParksData.getPark(slug);
+      if (fallback != null) return fallback;
+      rethrow;
+    }
+  }
   Future<Map<String, dynamic>> savePark(
     String slug,
     Map<String, dynamic> config,

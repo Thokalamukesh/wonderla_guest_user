@@ -6,6 +6,7 @@ function allowedOrigin(origin: string | null): origin is string {
   if (!origin) return false;
   const configuredOrigin = process.env.FLUTTER_WEB_ORIGIN;
   if (origin === (configuredOrigin || flutterProductionOrigin)) return true;
+  if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
 
   // Flutter's local Chrome debug port changes unless --web-port is specified.
   return (

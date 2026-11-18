@@ -26,29 +26,42 @@ async function exists(p: string): Promise<boolean> {
 
 /** Seed the initial parks exactly once (only if the folder is empty). */
 async function ensureSeeded() {
-  await ensureDir();
-  const entries = await listStoredKeys("qr-code/parks/", PARKS_DIR);
-  if (entries.length > 0) return;
-  if (isVercelRuntime && !hasVercelBlob) return;
-  await Promise.all(
-    SEED_PARKS.map((p) =>
-      writeStoredText(
-        `qr-code/parks/${p.slug}.json`,
-        fileFor(p.slug),
-        JSON.stringify(createDefaultParkConfig(p.name, p.location, p.slug), null, 2)
+  try {
+    await ensureDir();
+    const entries = await listStoredKeys("qr-code/parks/", PARKS_DIR);
+    if (entries.length > 0) return;
+    if (isVercelRuntime && !hasVercelBlob) return;
+    await Promise.all(
+      SEED_PARKS.map((p) =>
+        writeStoredText(
+          `qr-code/parks/${p.slug}.json`,
+          fileFor(p.slug),
+          JSON.stringify(createDefaultParkConfig(p.name, p.location, p.slug), null, 2)
+        )
       )
-    )
-  );
+    );
+  } catch {
+    /* Fall back to in-memory SEED_PARKS if Blob storage is unavailable or read-only */
+  }
+}
+
+function defaultSeedParkSummaries(): ParkSummary[] {
+  return SEED_PARKS.map((seed) => {
+    const config = createDefaultParkConfig(seed.name, seed.location, seed.slug);
+    return { slug: config.slug, name: config.name, location: config.location, active: config.active, updatedAt: config.updatedAt };
+  }).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function listParks(): Promise<ParkSummary[]> {
   await ensureSeeded();
-  const files = await listStoredKeys("qr-code/parks/", PARKS_DIR);
-  if (isVercelRuntime && !hasVercelBlob) {
-    return SEED_PARKS.map((seed) => {
-      const config = createDefaultParkConfig(seed.name, seed.location, seed.slug);
-      return { slug: config.slug, name: config.name, location: config.location, active: config.active, updatedAt: config.updatedAt };
-    }).sort((a, b) => a.name.localeCompare(b.name));
+  let files: string[] = [];
+  try {
+    files = await listStoredKeys("qr-code/parks/", PARKS_DIR);
+  } catch {
+    files = [];
+  }
+  if ((isVercelRuntime && !hasVercelBlob) || files.length === 0) {
+    return defaultSeedParkSummaries();
   }
   const parks = (await Promise.all(files.map(async (file): Promise<ParkSummary | null> => {
     try {
@@ -67,18 +80,20 @@ export async function listParks(): Promise<ParkSummary[]> {
       return null;
     }
   }))).filter((park): park is ParkSummary => park !== null);
+  if (parks.length === 0) return defaultSeedParkSummaries();
   return parks.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getPark(slug: string): Promise<ParkConfig | null> {
   await ensureSeeded();
-  const raw = await readStoredText(`qr-code/parks/${slug}.json`, fileFor(slug));
-  if (raw) return JSON.parse(raw) as ParkConfig;
-  if (isVercelRuntime && !hasVercelBlob) {
-    const seed = SEED_PARKS.find((park) => park.slug === slug);
-    return seed ? createDefaultParkConfig(seed.name, seed.location, seed.slug) : null;
+  try {
+    const raw = await readStoredText(`qr-code/parks/${slug}.json`, fileFor(slug));
+    if (raw) return JSON.parse(raw) as ParkConfig;
+  } catch {
+    /* Fall back to seed data below */
   }
-  return null;
+  const seed = SEED_PARKS.find((park) => park.slug === slug);
+  return seed ? createDefaultParkConfig(seed.name, seed.location, seed.slug) : null;
 }
 
 export async function savePark(config: ParkConfig): Promise<ParkConfig> {
