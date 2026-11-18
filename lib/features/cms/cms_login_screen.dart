@@ -108,13 +108,19 @@ class _LoginPageState extends State<_LoginPage> {
                       decoration: const InputDecoration(
                         labelText: 'Backend website URL',
                         hintText: 'https://your-domain.com',
+                        helperText: 'Local development: http://localhost:3000',
                         prefixIcon: Icon(Icons.language),
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) =>
-                          (v == null || Uri.tryParse(v)?.hasAuthority != true)
-                          ? 'Enter the website URL that hosts the CMS API.'
-                          : null,
+                      validator: (value) {
+                        final uri = Uri.tryParse(value?.trim() ?? '');
+                        if (uri == null ||
+                            !uri.hasAuthority ||
+                            !{'http', 'https'}.contains(uri.scheme)) {
+                          return 'Enter a valid http or https CMS website URL.';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 14),
                     TextFormField(

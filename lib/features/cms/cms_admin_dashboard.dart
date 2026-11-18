@@ -95,6 +95,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   List<Map<String, dynamic>> _parks = [];
   Map<String, dynamic>? _config;
   Map<String, dynamic>? _mapSettings;
+  String? _siteOrigin;
   List<Map<String, dynamic>> _users = [];
   String? _selectedSlug;
   String _section = 'Park overview';
@@ -190,6 +191,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     });
     if (value == 'Google Maps settings') await _loadMapSettings();
     if (value == 'Users') await _loadUsers();
+    if (value == 'Site URL & QR codes') await _loadSiteOrigin();
   }
 
   @override
@@ -500,6 +502,37 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     return ListView(
       padding: EdgeInsets.all(MediaQuery.sizeOf(context).width < 600 ? 16 : 28),
       children: [
+        Wrap(
+          spacing: 7,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            const Text(
+              'PARK CMS',
+              style: TextStyle(
+                color: wonderlaNavy,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: .8,
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, size: 17),
+            Text(
+              _config?['name']?.toString() ?? 'No park selected',
+              style: const TextStyle(color: wonderlaNavy, fontSize: 12),
+            ),
+            const Icon(Icons.chevron_right_rounded, size: 17),
+            Text(
+              _section,
+              style: const TextStyle(
+                color: wonderlaNavy,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
@@ -738,45 +771,62 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     final labels = Map<String, dynamic>.from(
       (_config!['homeCardLabels'] as Map?)?.cast<String, dynamic>() ?? const {},
     );
+    final visibility = Map<String, dynamic>.from(
+      (_config!['homeCardVisibility'] as Map?)?.cast<String, dynamic>() ??
+          const {},
+    );
     _config!['homeCardLabels'] = labels;
-    const shortcutLabels = <(String, String, String, IconData)>[
-      ('parkMap', 'Park Map', 'Park Map', LucideIcons.mapPinned),
+    _config!['homeCardVisibility'] = visibility;
+    const shortcutLabels = <(String, String, String, IconData, bool)>[
+      ('parkMap', 'Park Map', 'Park Map', LucideIcons.mapPinned, true),
       (
         'ridesEvents',
         'Rides & Events',
         'Rides & Events',
         LucideIcons.ferrisWheel,
+        true,
       ),
-      ('diningMenu', 'Dining & Menu', 'Dining & Menu', LucideIcons.utensils),
+      (
+        'diningMenu',
+        'Dining & Menu',
+        'Dining & Menu',
+        LucideIcons.utensils,
+        true,
+      ),
       (
         'liveWaitTimes',
         'Live Wait Times',
         'Live Wait Times',
         LucideIcons.timer,
+        false,
       ),
       (
         'rideGuidelines',
         'Ride Guidelines',
         'Ride Guidelines',
         LucideIcons.ruler,
+        true,
       ),
       (
         'wavePool',
         'Wave Pool & Rain Dance',
         'Wave Pool & Rain Dance',
         LucideIcons.waves,
+        false,
       ),
       (
         'safetyHygiene',
         'Safety & Hygiene',
         'Safety & Hygiene',
         LucideIcons.shieldCheck,
+        true,
       ),
       (
         'maintenanceLog',
         'Maintenance Log',
         'Maintenance Log',
         LucideIcons.wrench,
+        true,
       ),
     ];
     return Card(
@@ -792,7 +842,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Change any shortcut name visitors see. Short names fit best on phones. Clear a name to restore its default, then select Save changes.',
+              'Rename shortcuts, or turn them on and off on the visitor home page. Live Wait Times and Wave Pool & Rain Dance are off by default because they are also in Rides & Events. Save changes when you are done.',
               style: TextStyle(color: wonderlaNavy),
             ),
             const SizedBox(height: 18),
@@ -806,7 +856,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   spacing: 14,
                   runSpacing: 14,
                   children: [
-                    for (final (key, label, defaultValue, icon)
+                    for (final (key, label, defaultValue, icon, defaultVisible)
                         in shortcutLabels)
                       SizedBox(
                         width: cardWidth,
@@ -816,6 +866,8 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                           defaultValue: defaultValue,
                           icon: icon,
                           labels: labels,
+                          visibility: visibility,
+                          defaultVisible: defaultVisible,
                         ),
                       ),
                   ],
@@ -834,6 +886,8 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     required String defaultValue,
     required IconData icon,
     required Map<String, dynamic> labels,
+    required Map<String, dynamic> visibility,
+    required bool defaultVisible,
   }) {
     final edited = labels[key]?.toString().trim();
     final previewText = edited == null || edited.isEmpty
@@ -877,6 +931,13 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                 border: const OutlineInputBorder(),
                 isDense: true,
               ),
+            ),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              title: const Text('Show on visitor home'),
+              value: visibility[key] as bool? ?? defaultVisible,
+              onChanged: (value) => setState(() => visibility[key] = value),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -1016,8 +1077,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   ),
                   IconButton(
                     tooltip: 'Delete',
-                    onPressed: () =>
-                        setState(() => (_config![key] as List).removeAt(i)),
+                    onPressed: () => _deleteCollectionItem(key, i),
                     icon: const Icon(Icons.delete_outline),
                   ),
                 ],
@@ -1148,11 +1208,14 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                     icon: const Icon(Icons.edit_outlined),
                   ),
                   IconButton(
-                    onPressed: () => setState(() {
-                      places.removeAt(i);
-                      map['places'] = places;
-                      _config!['parkMap'] = map;
-                    }),
+                    tooltip: 'Delete place',
+                    onPressed: () => _deleteMapEntry(
+                      map: map,
+                      items: places,
+                      index: i,
+                      collectionKey: 'places',
+                      label: places[i]['name']?.toString() ?? 'map place',
+                    ),
                     icon: const Icon(Icons.delete_outline),
                   ),
                 ],
@@ -1177,11 +1240,14 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                     icon: const Icon(Icons.edit_outlined),
                   ),
                   IconButton(
-                    onPressed: () => setState(() {
-                      zones.removeAt(i);
-                      map['zones'] = zones;
-                      _config!['parkMap'] = map;
-                    }),
+                    tooltip: 'Delete zone',
+                    onPressed: () => _deleteMapEntry(
+                      map: map,
+                      items: zones,
+                      index: i,
+                      collectionKey: 'zones',
+                      label: zones[i]['name']?.toString() ?? 'map zone',
+                    ),
                     icon: const Icon(Icons.delete_outline),
                   ),
                 ],
@@ -1236,7 +1302,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   );
 
   Widget _siteUrlPage() {
-    final origin = widget.api.baseUrl;
+    final origin = _siteOrigin ?? widget.api.baseUrl;
     final slug = _selectedSlug ?? '';
     final url = '$origin/qr-code/$slug';
     return Card(
@@ -1283,7 +1349,9 @@ class _AdminDashboardState extends State<_AdminDashboard> {
 
   Future<void> _showParkQr(Map<String, dynamic> park) async {
     final slug = park['slug']?.toString() ?? '';
-    final url = '${widget.api.baseUrl}/qr-code/$slug';
+    final origin = await _resolveSiteOrigin();
+    if (!mounted) return;
+    final url = '$origin/qr-code/$slug';
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -1320,18 +1388,53 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             icon: const Icon(Icons.download),
             label: const Text('Download PNG'),
           ),
+          OutlinedButton.icon(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: url));
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Park QR link copied.')),
+                );
+              }
+            },
+            icon: const Icon(Icons.copy_rounded),
+            label: const Text('Copy link'),
+          ),
         ],
       ),
     );
   }
 
   Future<void> _loadSiteOrigin() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final origin = await _resolveSiteOrigin();
+      if (mounted) setState(() => _notice = 'QR links use $origin.');
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<String> _resolveSiteOrigin() async {
+    if (_siteOrigin != null) return _siteOrigin!;
     try {
       final value = await widget.api.siteUrl();
-      setState(() => _notice = 'Backend site origin: ${value['origin']}');
-    } catch (e) {
-      setState(() => _error = e.toString());
+      final uri = Uri.tryParse(value['origin']?.toString() ?? '');
+      if (uri != null &&
+          uri.hasAuthority &&
+          {'http', 'https'}.contains(uri.scheme)) {
+        _siteOrigin = uri.origin;
+        return _siteOrigin!;
+      }
+    } catch (_) {
+      // Fall back to the configured API host when site metadata is unavailable.
     }
+    return widget.api.baseUrl;
   }
 
   Future<void> _addPark() async {
@@ -1376,6 +1479,37 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     } catch (e) {
       setState(() => _error = e.toString());
     }
+  }
+
+  Future<void> _deleteCollectionItem(String key, int index) async {
+    final items = _config?[key] as List?;
+    if (items == null || index < 0 || index >= items.length) return;
+    final title = _itemTitle(Map<String, dynamic>.from(items[index] as Map));
+    final yes = await _confirm(
+      'Delete $title?',
+      'This item will be removed when you save the park changes.',
+    );
+    if (!yes || !mounted) return;
+    setState(() => items.removeAt(index));
+  }
+
+  Future<void> _deleteMapEntry({
+    required Map<String, dynamic> map,
+    required List<Map<String, dynamic>> items,
+    required int index,
+    required String collectionKey,
+    required String label,
+  }) async {
+    final yes = await _confirm(
+      'Delete $label?',
+      'This map item will be removed when you save the map configuration.',
+    );
+    if (!yes || !mounted || index < 0 || index >= items.length) return;
+    setState(() {
+      items.removeAt(index);
+      map[collectionKey] = items;
+      _config!['parkMap'] = map;
+    });
   }
 
   Future<void> _editItem(String configKey, int? index) async {
@@ -1475,6 +1609,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     String title,
     List<(String, String)> schema,
   ) async {
+    final formKey = GlobalKey<FormState>();
     final controllers = {
       for (final (key, _) in schema) key: TextEditingController(),
     };
@@ -1484,21 +1619,30 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         title: Text(title),
         content: SizedBox(
           width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final (key, label) in schema)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: TextField(
-                    controller: controllers[key],
-                    decoration: InputDecoration(
-                      labelText: label,
-                      border: const OutlineInputBorder(),
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final (key, label) in schema)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextFormField(
+                      controller: controllers[key],
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: label,
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Enter the $label.'
+                          : null,
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
         actions: [
@@ -1507,9 +1651,13 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(ctx, {
-              for (final key in controllers.keys) key: controllers[key]!.text,
-            }),
+            onPressed: () {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+              Navigator.pop(ctx, {
+                for (final key in controllers.keys)
+                  key: controllers[key]!.text.trim(),
+              });
+            },
             child: const Text('Create'),
           ),
         ],
@@ -1586,19 +1734,28 @@ class _AdminDashboardState extends State<_AdminDashboard> {
       isDense: true,
     ),
   );
-  Widget _statusBadge(bool active) => Chip(
-    label: Text(
-      active ? 'Active' : 'Inactive',
-      style: TextStyle(
-        fontSize: 11,
-        color: active ? wonderlaNavy : wonderlaNavy,
-        fontWeight: FontWeight.w700,
+  Widget _statusBadge(bool active) {
+    final foreground = active
+        ? const Color(0xff176447)
+        : const Color(0xff596579);
+    final background = active
+        ? const Color(0xffe7f4ed)
+        : const Color(0xffeef1f5);
+    return Chip(
+      label: Text(
+        active ? 'Published' : 'Hidden',
+        style: TextStyle(
+          fontSize: 11,
+          color: foreground,
+          fontWeight: FontWeight.w700,
+        ),
       ),
-    ),
-    backgroundColor: active ? wonderlaNavy : wonderlaWhite,
-    side: const BorderSide(color: wonderlaNavy),
-    visualDensity: VisualDensity.compact,
-  );
+      backgroundColor: background,
+      side: BorderSide(color: foreground.withValues(alpha: .18)),
+      visualDensity: VisualDensity.compact,
+    );
+  }
+
   Widget _thumbnail(String? url) => Container(
     width: 54,
     height: 54,
@@ -1642,7 +1799,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         margin: const EdgeInsets.only(top: 14),
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
-          color: error ? wonderlaWhite : wonderlaWhite,
+          color: error ? const Color(0xffffeeee) : const Color(0xffeaf5ee),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(

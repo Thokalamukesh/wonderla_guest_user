@@ -31,49 +31,62 @@ class _VisitorHomeState extends State<VisitorHome> {
   final Map<String, Map<String, dynamic>> _parkCache = {};
   final Map<String, Future<Map<String, dynamic>>> _parkRequests = {};
 
-  static const _tiles = <(String, String?, IconData, String)>[
-    ('PARK MAP', 'parkMap', LucideIcons.mapPinned, 'exploreParkMapImageUrl'),
+  static const _tiles = <(String, String, IconData, String, bool)>[
+    (
+      'PARK MAP',
+      'parkMap',
+      LucideIcons.mapPinned,
+      'exploreParkMapImageUrl',
+      true,
+    ),
     (
       'RIDES & EVENTS',
       'ridesEvents',
       LucideIcons.ferrisWheel,
       'exploreRidesImageUrl',
+      true,
     ),
     (
       'DINING & MENU',
       'diningMenu',
       LucideIcons.utensils,
       'exploreDiningImageUrl',
+      true,
     ),
     (
       'LIVE WAIT TIMES',
       'liveWaitTimes',
       LucideIcons.timer,
       'exploreWaitTimesImageUrl',
+      false,
     ),
     (
       'RIDE GUIDELINES',
       'rideGuidelines',
       LucideIcons.ruler,
       'exploreGuidelinesImageUrl',
+      true,
     ),
     (
       'WAVE POOL & RAIN DANCE',
       'wavePool',
       LucideIcons.waves,
       'exploreWaveImageUrl',
+      false,
     ),
     (
       'SAFETY & HYGIENE',
       'safetyHygiene',
       LucideIcons.shieldCheck,
       'exploreSafetyImageUrl',
+      true,
     ),
     (
       'MAINTENANCE LOG',
       'maintenanceLog',
       LucideIcons.wrench,
       'exploreMaintenanceImageUrl',
+      true,
     ),
   ];
 
@@ -251,18 +264,24 @@ class _VisitorHomeState extends State<VisitorHome> {
   }
 
   Widget _tileGrid(
-    List<(String, String?, IconData, String)> tiles,
+    List<(String, String, IconData, String, bool)> tiles,
     Map<String, dynamic> config, {
     required bool compact,
     required int delayOffset,
   }) {
     final columns = MediaQuery.sizeOf(context).width < 355 ? 1 : 2;
+    final visibility = config['homeCardVisibility'] as Map?;
+    final visibleTiles = tiles.where((tile) {
+      final setting = visibility?[tile.$2];
+      return setting is bool ? setting : tile.$5;
+    }).toList();
+    if (visibleTiles.isEmpty) return const SizedBox.shrink();
     return GridView.builder(
       padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       clipBehavior: Clip.none,
-      itemCount: tiles.length,
+      itemCount: visibleTiles.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
         childAspectRatio: columns == 1
@@ -274,7 +293,7 @@ class _VisitorHomeState extends State<VisitorHome> {
         mainAxisSpacing: compact ? 10 : 16,
       ),
       itemBuilder: (context, index) {
-        final tile = tiles[index];
+        final tile = visibleTiles[index];
         final title = tile.$1;
         final customTitle = (config['homeCardLabels'] as Map?)?[tile.$2]
             ?.toString()

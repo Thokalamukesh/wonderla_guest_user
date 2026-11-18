@@ -35,8 +35,8 @@ void main() {
         ),
       ),
     );
-    expect(find.text('EXPLORE THE PARK'), findsOneWidget);
-    await tester.tap(find.text('PARK MAP'));
+    expect(find.text('Explore Wonderla'), findsOneWidget);
+    await tester.tap(find.text('Park Map'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Demo Ride'), findsOneWidget);
