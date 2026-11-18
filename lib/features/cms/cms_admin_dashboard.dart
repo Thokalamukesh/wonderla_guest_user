@@ -559,7 +559,8 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   String get _sectionSubtitle => switch (_section) {
     'Park overview' =>
       'Update park identity, brand images and publishing status.',
-    'Home card labels' => 'Edit the Park Map and Rides & Events labels shown on the visitor home page.',
+    'Home card labels' =>
+      'Edit the names shown on all visitor home shortcut cards.',
     'Parks' =>
       'Create parks and control which parks appear in the visitor directory.',
     'Park map & places' =>
@@ -738,6 +739,46 @@ class _AdminDashboardState extends State<_AdminDashboard> {
       (_config!['homeCardLabels'] as Map?)?.cast<String, dynamic>() ?? const {},
     );
     _config!['homeCardLabels'] = labels;
+    const shortcutLabels = <(String, String, String, IconData)>[
+      ('parkMap', 'Park Map', 'Park Map', LucideIcons.mapPinned),
+      (
+        'ridesEvents',
+        'Rides & Events',
+        'Rides & Events',
+        LucideIcons.ferrisWheel,
+      ),
+      ('diningMenu', 'Dining & Menu', 'Dining & Menu', LucideIcons.utensils),
+      (
+        'liveWaitTimes',
+        'Live Wait Times',
+        'Live Wait Times',
+        LucideIcons.timer,
+      ),
+      (
+        'rideGuidelines',
+        'Ride Guidelines',
+        'Ride Guidelines',
+        LucideIcons.ruler,
+      ),
+      (
+        'wavePool',
+        'Wave Pool & Rain Dance',
+        'Wave Pool & Rain Dance',
+        LucideIcons.waves,
+      ),
+      (
+        'safetyHygiene',
+        'Safety & Hygiene',
+        'Safety & Hygiene',
+        LucideIcons.shieldCheck,
+      ),
+      (
+        'maintenanceLog',
+        'Maintenance Log',
+        'Maintenance Log',
+        LucideIcons.wrench,
+      ),
+    ];
     return Card(
       color: Colors.white,
       child: Padding(
@@ -751,20 +792,127 @@ class _AdminDashboardState extends State<_AdminDashboard> {
             ),
             const SizedBox(height: 6),
             const Text(
-              'These labels appear on the shortcut cards for this park. Leave a field empty to use its default label.',
+              'Change any shortcut name visitors see. Short names fit best on phones. Clear a name to restore its default, then select Save changes.',
               style: TextStyle(color: wonderlaNavy),
             ),
             const SizedBox(height: 18),
-            _textField(
-              'Park Map label',
-              labels['parkMap']?.toString() ?? '',
-              (value) => labels['parkMap'] = value,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth >= 680 ? 2 : 1;
+                final cardWidth = columns == 2
+                    ? (constraints.maxWidth - 14) / 2
+                    : constraints.maxWidth;
+                return Wrap(
+                  spacing: 14,
+                  runSpacing: 14,
+                  children: [
+                    for (final (key, label, defaultValue, icon)
+                        in shortcutLabels)
+                      SizedBox(
+                        width: cardWidth,
+                        child: _shortcutLabelEditor(
+                          key: key,
+                          label: label,
+                          defaultValue: defaultValue,
+                          icon: icon,
+                          labels: labels,
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: 14),
-            _textField(
-              'Rides & Events label',
-              labels['ridesEvents']?.toString() ?? '',
-              (value) => labels['ridesEvents'] = value,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _shortcutLabelEditor({
+    required String key,
+    required String label,
+    required String defaultValue,
+    required IconData icon,
+    required Map<String, dynamic> labels,
+  }) {
+    final edited = labels[key]?.toString().trim();
+    final previewText = edited == null || edited.isEmpty
+        ? defaultValue
+        : edited;
+    return Card(
+      color: wonderlaWhite,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xffe2e9f0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: _brandNavy, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: ValueKey('${_selectedSlug}_$key'),
+              initialValue: labels[key]?.toString() ?? '',
+              maxLength: 24,
+              textCapitalization: TextCapitalization.words,
+              onChanged: (value) => setState(() => labels[key] = value),
+              decoration: InputDecoration(
+                labelText: 'Card name',
+                hintText: defaultValue,
+                helperText: 'Leave blank for “$defaultValue”.',
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Preview',
+              style: TextStyle(
+                color: wonderlaNavy,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              constraints: const BoxConstraints(minHeight: 56),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(icon, color: _brandNavy, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      previewText,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _brandNavy,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: _brandNavy),
+                ],
+              ),
             ),
           ],
         ),

@@ -39,17 +39,42 @@ class _VisitorHomeState extends State<VisitorHome> {
       LucideIcons.ferrisWheel,
       'exploreRidesImageUrl',
     ),
-    ('DINING & MENU', null, LucideIcons.utensils, 'exploreDiningImageUrl'),
-    ('LIVE WAIT TIMES', null, LucideIcons.timer, 'exploreWaitTimesImageUrl'),
-    ('RIDE GUIDELINES', null, LucideIcons.ruler, 'exploreGuidelinesImageUrl'),
-    ('WAVE POOL & RAIN DANCE', null, LucideIcons.waves, 'exploreWaveImageUrl'),
+    (
+      'DINING & MENU',
+      'diningMenu',
+      LucideIcons.utensils,
+      'exploreDiningImageUrl',
+    ),
+    (
+      'LIVE WAIT TIMES',
+      'liveWaitTimes',
+      LucideIcons.timer,
+      'exploreWaitTimesImageUrl',
+    ),
+    (
+      'RIDE GUIDELINES',
+      'rideGuidelines',
+      LucideIcons.ruler,
+      'exploreGuidelinesImageUrl',
+    ),
+    (
+      'WAVE POOL & RAIN DANCE',
+      'wavePool',
+      LucideIcons.waves,
+      'exploreWaveImageUrl',
+    ),
     (
       'SAFETY & HYGIENE',
-      null,
+      'safetyHygiene',
       LucideIcons.shieldCheck,
       'exploreSafetyImageUrl',
     ),
-    ('MAINTENANCE LOG', null, LucideIcons.wrench, 'exploreMaintenanceImageUrl'),
+    (
+      'MAINTENANCE LOG',
+      'maintenanceLog',
+      LucideIcons.wrench,
+      'exploreMaintenanceImageUrl',
+    ),
   ];
 
   @override
@@ -169,6 +194,14 @@ class _VisitorHomeState extends State<VisitorHome> {
     if (!_api.isConfigured) {
       return 'Set the park guide website URL to connect to park content.';
     }
+    final message = error.toString().toLowerCase();
+    if (message.contains('failed to fetch') ||
+        message.contains('xmlhttprequest error') ||
+        message.contains('clientexception') ||
+        message.contains('connection refused') ||
+        message.contains('network is unreachable')) {
+      return 'Could not connect to the park content server at ${_api.baseUrl}. Start the CMS/API server at http://localhost:3000 and allow the local Flutter web origin in its CORS settings, or run Flutter with --dart-define=API_BASE_URL=<server-url>.';
+    }
     return error.toString();
   }
 
@@ -223,7 +256,7 @@ class _VisitorHomeState extends State<VisitorHome> {
     required bool compact,
     required int delayOffset,
   }) {
-    const columns = 2;
+    final columns = MediaQuery.sizeOf(context).width < 355 ? 1 : 2;
     return GridView.builder(
       padding: EdgeInsets.zero,
       shrinkWrap: true,
@@ -232,9 +265,13 @@ class _VisitorHomeState extends State<VisitorHome> {
       itemCount: tiles.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
-        childAspectRatio: compact ? 1.42 : 1.55,
-        crossAxisSpacing: 14,
-        mainAxisSpacing: 16,
+        childAspectRatio: columns == 1
+            ? 4.0
+            : compact
+            ? 1.82
+            : 1.7,
+        crossAxisSpacing: compact ? 10 : 14,
+        mainAxisSpacing: compact ? 10 : 16,
       ),
       itemBuilder: (context, index) {
         final tile = tiles[index];
@@ -242,10 +279,10 @@ class _VisitorHomeState extends State<VisitorHome> {
         final customTitle = (config['homeCardLabels'] as Map?)?[tile.$2]
             ?.toString()
             .trim();
+        final hasCustomTitle = customTitle != null && customTitle.isNotEmpty;
         return ShortcutCard(
-          title: customTitle == null || customTitle.isEmpty
-              ? title
-              : customTitle,
+          title: hasCustomTitle ? customTitle : title,
+          titleCase: !hasCustomTitle,
           icon: tile.$3,
           imageUrl: _imageUrl(config[tile.$4]?.toString()),
           delay: (delayOffset + index) * 45,
@@ -673,6 +710,7 @@ class ShortcutCard extends StatelessWidget {
   const ShortcutCard({
     super.key,
     required this.title,
+    required this.titleCase,
     required this.icon,
     required this.imageUrl,
     required this.delay,
@@ -681,6 +719,7 @@ class ShortcutCard extends StatelessWidget {
   });
 
   final String title;
+  final bool titleCase;
   final String imageUrl;
   final IconData icon;
   final int delay;
@@ -719,11 +758,11 @@ class ShortcutCard extends StatelessWidget {
         Transform.scale(scale: value, child: child),
     child: LayoutBuilder(
       builder: (context, constraints) {
-        final imageSize = (constraints.maxWidth * .24).clamp(38.0, 48.0);
+        final imageSize = (constraints.maxWidth * .22).clamp(34.0, 44.0);
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(27),
+            borderRadius: BorderRadius.circular(23),
             border: Border.all(color: const Color(0xfffbfdff), width: 1.2),
             boxShadow: const [
               BoxShadow(
@@ -741,38 +780,38 @@ class ShortcutCard extends StatelessWidget {
           ),
           child: Material(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(27),
+            borderRadius: BorderRadius.circular(23),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: onTap,
               child: Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: compact ? 8 : 12,
-                  vertical: compact ? 8 : 12,
+                  horizontal: compact ? 6 : 12,
+                  vertical: compact ? 6 : 12,
                 ),
                 child: Row(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(17),
+                      borderRadius: BorderRadius.circular(8),
                       child: SizedBox.square(
                         dimension: imageSize,
                         child: _tileImage(imageSize),
                       ),
                     ),
-                    SizedBox(width: compact ? 7 : 10),
+                    SizedBox(width: compact ? 6 : 10),
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _titleCase(title),
+                            titleCase ? _titleCase(title) : title,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: _navy,
                               fontSize: compact ? 12 : 14,
-                              height: 1.08,
+                              height: 1.04,
                               fontWeight: FontWeight.w800,
                             ),
                           ),

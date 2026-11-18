@@ -17,7 +17,13 @@ On Android, grant location permission and enable device location. If the map rep
 
 The app opens on the responsive Wonderla visitor guide. The Park Map tile launches the existing Flutter map screen; its map, place search, GPS and walking navigation implementation is unchanged. The guide and CMS use the blue and yellow from `assets/images/wonderla_logo.webp`.
 
-The CMS client at `lib/features/cms/cms_screen.dart` uses the existing Next.js endpoints under `/qr-code/api`. In local Chrome debugging it defaults to the Next.js dev server at `http://localhost:3000`; the Flutter web app uses credentialed requests so the existing admin session cookie is retained. The Next.js middleware permits localhost Flutter origins only in development. For an independent production Flutter web origin, set `FLUTTER_WEB_ORIGIN` on Next.js to the exact Flutter site origin. For Android/iOS, pass the public backend origin at build/run time:
+The CMS client at `lib/features/cms/cms_screen.dart` uses the existing Next.js endpoints under `/qr-code/api`. This repository contains the Flutter client; the Next.js CMS/API must also be running for park data and admin login to work. Local Chrome runs default to that server at `http://localhost:3000`. To use a different backend, pass `API_BASE_URL` (this override also applies to Flutter web):
+
+```sh
+flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:3000
+```
+
+The Flutter web app uses credentialed requests so the existing admin session cookie is retained. The Next.js middleware permits localhost Flutter origins only in development. For an independent production Flutter web origin, set `FLUTTER_WEB_ORIGIN` on Next.js to the exact Flutter site origin. For Android/iOS, pass the backend origin at build/run time; Android emulators typically reach a host machine using `10.0.2.2`:
 
 ```sh
 flutter run --dart-define=API_BASE_URL=https://your-site.example

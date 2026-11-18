@@ -16,6 +16,10 @@ class CmsApi {
 
   static const _definedBaseUrl = String.fromEnvironment('API_BASE_URL');
   static String _configuredBaseUrl() {
+    final override = _definedBaseUrl.trim();
+    if (override.isNotEmpty) {
+      return override.replaceAll(RegExp(r'/$'), '');
+    }
     if (kIsWeb) {
       if (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1') {
         return 'http://localhost:3000';
