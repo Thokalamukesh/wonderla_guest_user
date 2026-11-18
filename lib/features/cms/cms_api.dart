@@ -55,9 +55,7 @@ class CmsApi {
     if (body != null) request.body = jsonEncode(body);
     final response = await _httpClient.send(request);
     final result = await http.Response.fromStream(response);
-    final data = result.body.isEmpty
-        ? <String, dynamic>{}
-        : jsonDecode(result.body) as Map<String, dynamic>;
+    final data = _decodeJson(result);
     _saveCookie(result.headers);
     if (result.statusCode < 200 ||
         result.statusCode >= 300 ||
@@ -67,6 +65,24 @@ class CmsApi {
       );
     }
     return data;
+  }
+
+  Map<String, dynamic> _decodeJson(http.Response response) {
+    if (response.body.isEmpty) return <String, dynamic>{};
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) return decoded;
+    } on FormatException {
+      if (response.body.trimLeft().startsWith('<')) {
+        throw CmsApiException(
+          'Received an HTML response instead of JSON from ${response.request?.url ?? _baseUrl} (${response.statusCode}). Check your Vercel rewrites or API_BASE_URL.',
+        );
+      }
+      rethrow;
+    }
+    throw CmsApiException(
+      'Unexpected response format (${response.statusCode}).',
+    );
   }
 
   void _saveCookie(Map<String, String> headers) {
@@ -214,9 +230,7 @@ class CmsApi {
           );
     final streamed = await _httpClient.send(request);
     final response = await http.Response.fromStream(streamed);
-    final data = response.body.isEmpty
-        ? <String, dynamic>{}
-        : jsonDecode(response.body) as Map<String, dynamic>;
+    final data = _decodeJson(response);
     if (response.statusCode < 200 ||
         response.statusCode >= 300 ||
         data['ok'] != true) {
