@@ -6,6 +6,7 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:video_player/video_player.dart';
 
 import 'cms_api.dart';
 import '../home/home_shortcut_catalog.dart';

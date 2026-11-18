@@ -675,6 +675,15 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                   value: cfg['heroImageUrl']?.toString() ?? '',
                   onChanged: (v) => setState(() => cfg['heroImageUrl'] = v),
                 ),
+                const SizedBox(height: 12),
+                _VideoPickerField(
+                  api: widget.api,
+                  parkSlug: _selectedSlug!,
+                  label: 'Welcome banner video (optional; replaces the image)',
+                  value: cfg['heroVideoUrl']?.toString() ?? '',
+                  onChanged: (v) => setState(() => cfg['heroVideoUrl'] = v),
+                  onUploaded: (_) => _savePark(),
+                ),
                 const SizedBox(height: 20),
                 const Align(
                   alignment: Alignment.centerLeft,

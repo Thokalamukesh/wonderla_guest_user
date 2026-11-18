@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 import '../cms/cms_api.dart';
 import 'configured_park_map_screen.dart';
@@ -337,6 +338,9 @@ class _VisitorHomeState extends State<VisitorHome> {
                               imageUrl: _imageUrl(
                                 cfg['heroImageUrl']?.toString(),
                               ),
+                              videoUrl: _imageUrl(
+                                cfg['heroVideoUrl']?.toString(),
+                              ),
                             ),
                           ),
                           Padding(
@@ -378,7 +382,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                                           style: TextStyle(
                                             color: _navy,
                                             fontSize: compactHome ? 25 : 29,
-                                            fontWeight: FontWeight.w800,
+                                            fontWeight: FontWeight.w900,
                                             letterSpacing: -.5,
                                           ),
                                         ),
@@ -515,7 +519,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                             p['name']?.toString() ?? '',
                             style: const TextStyle(
                               color: _navy,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
                           subtitle: Text(p['location']?.toString() ?? ''),
@@ -599,8 +603,9 @@ class _HeroCard extends StatelessWidget {
     required this.name,
     required this.location,
     required this.imageUrl,
+    required this.videoUrl,
   });
-  final String name, location, imageUrl;
+  final String name, location, imageUrl, videoUrl;
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
@@ -630,6 +635,7 @@ class _HeroCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => const SizedBox(),
               ),
+            if (videoUrl.isNotEmpty) _HeroVideoBackground(url: videoUrl),
             const DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -686,6 +692,12 @@ class _HeroCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    Positioned(
+                      left: compact ? 10 : 24,
+                      right: compact ? 10 : 24,
+                      bottom: compact ? 78 : 82,
+                      child: _HeroSlogan(compact: compact),
+                    ),
                   ],
                 ],
               ),
@@ -695,6 +707,129 @@ class _HeroCard extends StatelessWidget {
       );
     },
   );
+}
+
+class _HeroVideoBackground extends StatefulWidget {
+  const _HeroVideoBackground({required this.url});
+  final String url;
+
+  @override
+  State<_HeroVideoBackground> createState() => _HeroVideoBackgroundState();
+}
+
+class _HeroVideoBackgroundState extends State<_HeroVideoBackground> {
+  VideoPlayerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _start();
+  }
+
+  @override
+  void didUpdateWidget(covariant _HeroVideoBackground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) _start();
+  }
+
+  Future<void> _start() async {
+    final old = _controller;
+    _controller = null;
+    await old?.dispose();
+    final controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+    try {
+      await controller.initialize();
+      await controller.setLooping(true);
+      await controller.setVolume(0);
+      await controller.play();
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      setState(() => _controller = controller);
+    } catch (_) {
+      await controller.dispose();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) {
+      return const SizedBox.expand();
+    }
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: SizedBox(
+        width: controller.value.size.width,
+        height: controller.value.size.height,
+        child: VideoPlayer(controller),
+      ),
+    );
+  }
+}
+
+class _HeroSlogan extends StatelessWidget {
+  const _HeroSlogan({required this.compact});
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    const slogan = "INDIA'S LARGEST\nAMUSEMENT PARK CHAIN!";
+    final size = compact ? 19.0 : 31.0;
+    final base = TextStyle(
+      fontSize: size,
+      height: .98,
+      fontWeight: FontWeight.w900,
+      letterSpacing: compact ? .1 : .6,
+      fontFamily: 'Arial',
+    );
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Text(
+            slogan,
+            textAlign: TextAlign.center,
+            style: base.copyWith(
+              foreground: Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = compact ? 1.4 : 2.1
+                ..color = const Color(0xffffdf00),
+              shadows: const [
+                Shadow(
+                  color: Colors.black87,
+                  blurRadius: 6,
+                  offset: Offset(1, 3),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            slogan,
+            textAlign: TextAlign.center,
+            style: base.copyWith(
+              color: const Color(0xffd8aa00),
+              shadows: const [
+                Shadow(
+                  color: Color(0x99000000),
+                  blurRadius: 3,
+                  offset: Offset(1, 2),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class ShortcutCard extends StatelessWidget {

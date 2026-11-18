@@ -129,8 +129,15 @@ class CmsApi {
     await _json('/users/${Uri.encodeComponent(username)}', method: 'DELETE');
   }
 
-  Future<void> updateUserPermissions(String username, List<String> permissions) async {
-    await _json('/users/${Uri.encodeComponent(username)}', method: 'PATCH', body: {'permissions': permissions});
+  Future<void> updateUserPermissions(
+    String username,
+    List<String> permissions,
+  ) async {
+    await _json(
+      '/users/${Uri.encodeComponent(username)}',
+      method: 'PATCH',
+      body: {'permissions': permissions},
+    );
   }
 
   Future<Map<String, dynamic>> mapSettings() async => _json('/map-settings');
@@ -149,19 +156,57 @@ class CmsApi {
         : name.endsWith('.gif')
         ? 'image/gif'
         : 'image/jpeg';
+    return _uploadMedia(
+      parkSlug,
+      file,
+      path: 'images',
+      field: 'image',
+      type: type,
+      maxBytes: 5 * 1024 * 1024,
+      limitLabel: 'Choose an image under 5 MB.',
+    );
+  }
+
+  Future<String> uploadVideo(String parkSlug, XFile file) {
+    final name = file.name.toLowerCase();
+    final type = name.endsWith('.webm')
+        ? 'video/webm'
+        : name.endsWith('.mov')
+        ? 'video/quicktime'
+        : 'video/mp4';
+    return _uploadMedia(
+      parkSlug,
+      file,
+      path: 'videos',
+      field: 'video',
+      type: type,
+      maxBytes: 50 * 1024 * 1024,
+      limitLabel: 'Choose a video under 50 MB.',
+    );
+  }
+
+  Future<String> _uploadMedia(
+    String parkSlug,
+    XFile file, {
+    required String path,
+    required String field,
+    required String type,
+    required int maxBytes,
+    required String limitLabel,
+  }) async {
     final bytes = await file.readAsBytes();
-    if (bytes.isEmpty || bytes.length > 5 * 1024 * 1024) {
-      throw const CmsApiException('Choose an image under 5 MB.');
+    if (bytes.isEmpty || bytes.length > maxBytes) {
+      throw CmsApiException(limitLabel);
     }
     final request =
         http.MultipartRequest(
             'POST',
-            _uri('/parks/${Uri.encodeComponent(parkSlug)}/images'),
+            _uri('/parks/${Uri.encodeComponent(parkSlug)}/$path'),
           )
           ..headers.addAll(_headers)
           ..files.add(
             http.MultipartFile.fromBytes(
-              'image',
+              field,
               bytes,
               filename: file.name,
               contentType: MediaType.parse(type),
@@ -175,10 +220,10 @@ class CmsApi {
     if (response.statusCode < 200 ||
         response.statusCode >= 300 ||
         data['ok'] != true) {
-      throw CmsApiException(
-        data['error']?.toString() ??
-            'Image upload failed (${response.statusCode}).',
-      );
+      final fallbackError = path == 'videos' && response.statusCode == 404
+          ? 'Video uploads are not enabled on the connected CMS server yet.'
+          : 'Media upload failed (${response.statusCode}).';
+      throw CmsApiException(data['error']?.toString() ?? fallbackError);
     }
     return data['url'] as String;
   }
