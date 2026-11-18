@@ -16,7 +16,7 @@ class _AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<_AdminDashboard> {
   final _sections = const [
     ('Park overview', LucideIcons.chartNoAxesCombined),
-    ('Home card labels', LucideIcons.type),
+    ('Home cards', LucideIcons.type),
     ('Parks', LucideIcons.building2),
     ('Rides', LucideIcons.ferrisWheel),
     ('Events', LucideIcons.calendarDays),
@@ -109,7 +109,10 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     widget.user['permissions'] as List? ?? const <String>[],
   );
   bool _canAccess(String section) =>
-      _super || _permissions.contains('all') || _permissions.contains(section);
+      _super ||
+      _permissions.contains('all') ||
+      _permissions.contains(section) ||
+      (section == 'Home cards' && _permissions.contains('Home card labels'));
   bool get _canSave =>
       _config != null &&
       _canAccess(_section) &&
@@ -567,7 +570,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         const SizedBox(height: 18),
         if (_section == 'Park overview' && _canAccess('Park overview'))
           ScrollReveal(child: _overview()),
-        if (_section == 'Home card labels' && _canAccess(_section))
+        if (_section == 'Home cards' && _canAccess(_section))
           ScrollReveal(child: _homeCardLabelsPage()),
         if (_section == 'Parks') ScrollReveal(child: _parksPage()),
         if (_listKeys.containsKey(_section) && _canAccess(_section))
@@ -592,8 +595,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   String get _sectionSubtitle => switch (_section) {
     'Park overview' =>
       'Update park identity, brand images and publishing status.',
-    'Home card labels' =>
-      'Edit the names shown on all visitor home shortcut cards.',
+    'Home cards' => 'Add, rename, show, hide, or reorder visitor home cards.',
     'Parks' =>
       'Create parks and control which parks appear in the visitor directory.',
     'Park map & places' =>
@@ -693,6 +695,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
                 for (final (key, label) in const <(String, String)>[
                   ('exploreParkMapImageUrl', 'Park map'),
                   ('exploreRidesImageUrl', 'Rides & events'),
+                  ('exploreEventsImageUrl', 'Events'),
                   ('exploreDiningImageUrl', 'Dining & menu'),
                   ('exploreWaitTimesImageUrl', 'Live wait times'),
                   ('exploreGuidelinesImageUrl', 'Ride guidelines'),
@@ -765,218 +768,286 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     if (_config == null) {
       return const _EmptyCard(
         'No park selected',
-        'Select a park to edit its visitor home page labels.',
+        'Select a park to manage its visitor home cards.',
       );
     }
     final labels = Map<String, dynamic>.from(
       (_config!['homeCardLabels'] as Map?)?.cast<String, dynamic>() ?? const {},
     );
-    final visibility = Map<String, dynamic>.from(
-      (_config!['homeCardVisibility'] as Map?)?.cast<String, dynamic>() ??
-          const {},
-    );
     _config!['homeCardLabels'] = labels;
-    _config!['homeCardVisibility'] = visibility;
-    const shortcutLabels = <(String, String, String, IconData, bool)>[
-      ('parkMap', 'Park Map', 'Park Map', LucideIcons.mapPinned, true),
-      (
-        'ridesEvents',
-        'Rides & Events',
-        'Rides & Events',
-        LucideIcons.ferrisWheel,
-        true,
-      ),
-      (
-        'diningMenu',
-        'Dining & Menu',
-        'Dining & Menu',
-        LucideIcons.utensils,
-        true,
-      ),
-      (
-        'liveWaitTimes',
-        'Live Wait Times',
-        'Live Wait Times',
-        LucideIcons.timer,
-        false,
-      ),
-      (
-        'rideGuidelines',
-        'Ride Guidelines',
-        'Ride Guidelines',
-        LucideIcons.ruler,
-        true,
-      ),
-      (
-        'wavePool',
-        'Wave Pool & Rain Dance',
-        'Wave Pool & Rain Dance',
-        LucideIcons.waves,
-        false,
-      ),
-      (
-        'safetyHygiene',
-        'Safety & Hygiene',
-        'Safety & Hygiene',
-        LucideIcons.shieldCheck,
-        true,
-      ),
-      (
-        'maintenanceLog',
-        'Maintenance Log',
-        'Maintenance Log',
-        LucideIcons.wrench,
-        true,
-      ),
-    ];
-    return Card(
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Visitor home shortcuts',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Rename shortcuts, or turn them on and off on the visitor home page. Live Wait Times and Wave Pool & Rain Dance are off by default because they are also in Rides & Events. Save changes when you are done.',
-              style: TextStyle(color: wonderlaNavy),
-            ),
-            const SizedBox(height: 18),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = constraints.maxWidth >= 680 ? 2 : 1;
-                final cardWidth = columns == 2
-                    ? (constraints.maxWidth - 14) / 2
-                    : constraints.maxWidth;
-                return Wrap(
-                  spacing: 14,
-                  runSpacing: 14,
-                  children: [
-                    for (final (key, label, defaultValue, icon, defaultVisible)
-                        in shortcutLabels)
-                      SizedBox(
-                        width: cardWidth,
-                        child: _shortcutLabelEditor(
-                          key: key,
-                          label: label,
-                          defaultValue: defaultValue,
-                          icon: icon,
-                          labels: labels,
-                          visibility: visibility,
-                          defaultVisible: defaultVisible,
+    final shortcuts = _homeShortcutSettings();
+    _config!['homeShortcuts'] = shortcuts;
+    final presentKeys = shortcuts.map((item) => item['key']).toSet();
+    final available = HomeShortcutCatalog.definitions
+        .where((item) => !presentKeys.contains(item.keyName))
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Card(
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Visitor home cards',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  'Add a card, drag it to change its position, and switch it off to hide it. Edit names below, then save changes.',
+                  style: TextStyle(color: wonderlaNavy),
+                ),
+                const SizedBox(height: 14),
+                PopupMenuButton<String>(
+                  enabled: available.isNotEmpty,
+                  onSelected: _addHomeShortcut,
+                  itemBuilder: (context) => [
+                    for (final item in available)
+                      PopupMenuItem(
+                        value: item.keyName,
+                        child: Row(
+                          children: [
+                            Icon(item.icon, size: 18, color: _brandNavy),
+                            const SizedBox(width: 9),
+                            Text(item.label),
+                          ],
                         ),
                       ),
                   ],
-                );
-              },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _brandNavy,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_rounded, color: Colors.white, size: 19),
+                        SizedBox(width: 7),
+                        Text(
+                          'Add shortcut',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (available.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text(
+                      'All supported shortcuts are already in this list.',
+                      style: TextStyle(color: wonderlaNavy, fontSize: 12),
+                    ),
+                  ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        if (shortcuts.isEmpty)
+          const _EmptyCard(
+            'No home cards',
+            'Use Add shortcut to choose what visitors can open.',
+          )
+        else
+          ReorderableListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            itemCount: shortcuts.length,
+            onReorderItem: _reorderHomeShortcut,
+            itemBuilder: (context, index) => _homeShortcutRow(
+              index: index,
+              setting: shortcuts[index],
+              labels: labels,
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _shortcutLabelEditor({
-    required String key,
-    required String label,
-    required String defaultValue,
-    required IconData icon,
+  List<Map<String, dynamic>> _homeShortcutSettings() {
+    final saved = _config!['homeShortcuts'];
+    if (saved is List) {
+      final seen = <String>{};
+      return saved
+          .whereType<Map>()
+          .map((entry) => Map<String, dynamic>.from(entry))
+          .where((entry) {
+            final key = entry['key']?.toString() ?? '';
+            return HomeShortcutCatalog.byKey(key) != null && seen.add(key);
+          })
+          .map(
+            (entry) => {
+              'key': entry['key'],
+              'visible': entry['visible'] != false,
+            },
+          )
+          .toList();
+    }
+
+    final oldVisibility = _config!['homeCardVisibility'] as Map?;
+    final keys = [...HomeShortcutCatalog.defaultKeys];
+    for (final key in const ['liveWaitTimes', 'wavePool']) {
+      if (oldVisibility?[key] == true) keys.add(key);
+    }
+    return keys.map((key) {
+      final legacyKey = key == 'rides' || key == 'events' ? 'ridesEvents' : key;
+      final visible = oldVisibility?[key] ?? oldVisibility?[legacyKey];
+      return {'key': key, 'visible': visible is bool ? visible : true};
+    }).toList();
+  }
+
+  void _addHomeShortcut(String key) {
+    final settings = List<Map<String, dynamic>>.from(
+      (_config!['homeShortcuts'] as List).map(
+        (entry) => Map<String, dynamic>.from(entry as Map),
+      ),
+    );
+    if (settings.any((entry) => entry['key'] == key)) return;
+    setState(() {
+      settings.add({'key': key, 'visible': true});
+      _config!['homeShortcuts'] = settings;
+    });
+  }
+
+  void _reorderHomeShortcut(int oldIndex, int newIndex) {
+    final settings = List<Map<String, dynamic>>.from(
+      (_config!['homeShortcuts'] as List).map(
+        (entry) => Map<String, dynamic>.from(entry as Map),
+      ),
+    );
+    setState(() {
+      final moved = settings.removeAt(oldIndex);
+      settings.insert(newIndex, moved);
+      _config!['homeShortcuts'] = settings;
+    });
+  }
+
+  void _removeHomeShortcut(String key) {
+    final settings = List<Map<String, dynamic>>.from(
+      (_config!['homeShortcuts'] as List).map(
+        (entry) => Map<String, dynamic>.from(entry as Map),
+      ),
+    );
+    setState(() {
+      settings.removeWhere((entry) => entry['key'] == key);
+      _config!['homeShortcuts'] = settings;
+    });
+  }
+
+  Widget _homeShortcutRow({
+    required int index,
+    required Map<String, dynamic> setting,
     required Map<String, dynamic> labels,
-    required Map<String, dynamic> visibility,
-    required bool defaultVisible,
   }) {
-    final edited = labels[key]?.toString().trim();
-    final previewText = edited == null || edited.isEmpty
-        ? defaultValue
-        : edited;
+    final key = setting['key']?.toString() ?? '';
+    final definition = HomeShortcutCatalog.byKey(key);
+    if (definition == null) return const SizedBox.shrink();
+    final visible = setting['visible'] != false;
+    final editor = TextFormField(
+      key: ValueKey('${_selectedSlug}_shortcut_$key'),
+      initialValue: labels[key]?.toString() ?? '',
+      maxLength: 24,
+      textCapitalization: TextCapitalization.words,
+      onChanged: (value) => setState(() => labels[key] = value),
+      decoration: InputDecoration(
+        labelText: 'Card name',
+        hintText: definition.label,
+        helperText: 'Clear to use “${definition.label}”.',
+        counterText: '',
+        border: const OutlineInputBorder(),
+        isDense: true,
+      ),
+    );
+    final dragHandle = ReorderableDragStartListener(
+      index: index,
+      child: const Padding(
+        padding: EdgeInsets.all(8),
+        child: Icon(Icons.drag_indicator_rounded, color: wonderlaMuted),
+      ),
+    );
+    final removeButton = IconButton(
+      tooltip: 'Remove shortcut',
+      onPressed: () => _removeHomeShortcut(key),
+      icon: const Icon(Icons.close_rounded),
+    );
+    final visibilitySwitch = Switch.adaptive(
+      value: visible,
+      onChanged: (value) => setState(() => setting['visible'] = value),
+    );
+
     return Card(
-      color: wonderlaWhite,
+      key: ValueKey('home-shortcut-$key'),
+      color: Colors.white,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         side: const BorderSide(color: Color(0xffe2e9f0)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: _brandNavy, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 560;
+          final heading = Row(
+            children: [
+              dragHandle,
+              Icon(definition.icon, color: _brandNavy, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  definition.label,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              key: ValueKey('${_selectedSlug}_$key'),
-              initialValue: labels[key]?.toString() ?? '',
-              maxLength: 24,
-              textCapitalization: TextCapitalization.words,
-              onChanged: (value) => setState(() => labels[key] = value),
-              decoration: InputDecoration(
-                labelText: 'Card name',
-                hintText: defaultValue,
-                helperText: 'Leave blank for “$defaultValue”.',
-                border: const OutlineInputBorder(),
-                isDense: true,
               ),
-            ),
-            SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: const Text('Show on visitor home'),
-              value: visibility[key] as bool? ?? defaultVisible,
-              onChanged: (value) => setState(() => visibility[key] = value),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Preview',
-              style: TextStyle(
-                color: wonderlaNavy,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              constraints: const BoxConstraints(minHeight: 56),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+              if (compact) removeButton,
+            ],
+          );
+          if (compact) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(icon, color: _brandNavy, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      previewText,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _brandNavy,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
+                  heading,
+                  const SizedBox(height: 8),
+                  editor,
+                  Row(
+                    children: [
+                      const Expanded(child: Text('Show on visitor home')),
+                      visibilitySwitch,
+                    ],
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: _brandNavy),
                 ],
               ),
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 12, 12),
+            child: Row(
+              children: [
+                dragHandle,
+                Icon(definition.icon, color: _brandNavy, size: 20),
+                const SizedBox(width: 12),
+                Expanded(child: editor),
+                const SizedBox(width: 14),
+                const Text('Show'),
+                visibilitySwitch,
+                removeButton,
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -1780,6 +1851,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   String _itemSubtitle(Map<String, dynamic> item) => [
     item['description'],
     item['time'] is num ? '${item['time']} min wait' : item['time'],
+    item['lastService'] == null ? null : 'Last service: ${item['lastService']}',
     item['cuisine'],
     item['checks'],
   ].where((e) => e != null && e.toString().isNotEmpty).join(' · ');

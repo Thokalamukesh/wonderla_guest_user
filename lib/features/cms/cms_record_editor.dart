@@ -127,6 +127,26 @@ class _RecordEditorState extends State<_RecordEditor> {
     return error == null;
   }
 
+  Future<void> _pickServiceDate() async {
+    final now = DateTime.now();
+    final current = _controllers['lastService']?.text.trim() ?? '';
+    final parts = current.split('/');
+    final parsed = parts.length == 3
+        ? DateTime.tryParse('${parts[2]}-${parts[1]}-${parts[0]}')
+        : DateTime.tryParse(current);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: parsed ?? now,
+      firstDate: DateTime(1990),
+      lastDate: DateTime(now.year + 5),
+    );
+    if (picked == null || !mounted) return;
+    String twoDigits(int value) => value.toString().padLeft(2, '0');
+    _controllers['lastService']?.text =
+        '${twoDigits(picked.day)}/${twoDigits(picked.month)}/${picked.year}';
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
@@ -184,6 +204,22 @@ class _RecordEditorState extends State<_RecordEditor> {
                   title: Text(label),
                   value: _values[key] == true,
                   onChanged: (v) => setState(() => _values[key] = v),
+                )
+              else if (key == 'lastService')
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 13),
+                  child: TextField(
+                    controller: _controllers[key],
+                    readOnly: true,
+                    onTap: _pickServiceDate,
+                    decoration: InputDecoration(
+                      labelText: label,
+                      hintText: 'Choose a service date',
+                      suffixIcon: const Icon(Icons.calendar_today_outlined),
+                      border: const OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
                 )
               else
                 Padding(

@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'cms_api.dart';
+import '../home/home_shortcut_catalog.dart';
 import 'qr_download.dart';
 import '../../shared/scroll_reveal.dart';
 import '../../shared/wonderla_palette.dart';

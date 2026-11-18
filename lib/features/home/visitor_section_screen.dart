@@ -70,7 +70,8 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
         onPressed: () => Navigator.pop(context),
         icon: const Icon(Icons.arrow_back_ios_new_rounded),
       ),
-      actions: ['LIVE WAIT TIMES', 'MAINTENANCE LOG'].contains(widget.title)
+      actions:
+          ['RIDES & WATER ACTIVITIES', 'MAINTENANCE LOG'].contains(widget.title)
           ? [
               IconButton(
                 onPressed: _refresh,
@@ -86,13 +87,7 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
         children: [
           if (_error != null) _notice(_error!, error: true),
           if (_loading) const LinearProgressIndicator(color: _navy),
-          ..._content().asMap().entries.map(
-            (entry) => ScrollReveal(
-              key: ValueKey('${widget.title}-${entry.key}'),
-              delay: Duration(milliseconds: entry.key * 45),
-              child: entry.value,
-            ),
-          ),
+          ..._content(),
         ],
       ),
     ),
@@ -110,95 +105,41 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
 
   List<Widget> _ridesEvents() {
     final rides = _list('rides');
-    final water = _list('waveRainDance');
     final tabLabels = ['Rides', 'Water activities', 'Live wait time'];
-    final items = _rideTab == 'Rides' ? rides : water;
-    final tabs = Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          for (final tab in tabLabels)
-            Expanded(
-              child: InkWell(
-                onTap: () => setState(() => _rideTab = tab),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: _rideTab == tab ? _navy : Colors.transparent,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    tab.toUpperCase(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: _rideTab == tab ? Colors.white : wonderlaNavy,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
+    final tabs = Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final tab in tabLabels)
+          ChoiceChip(
+            label: Text(tab),
+            selected: _rideTab == tab,
+            showCheckmark: false,
+            selectedColor: _navy,
+            backgroundColor: Colors.white,
+            labelStyle: TextStyle(
+              color: _rideTab == tab ? Colors.white : wonderlaNavy,
+              fontWeight: FontWeight.w700,
             ),
-        ],
-      ),
+            onSelected: (_) => setState(() => _rideTab = tab),
+          ),
+      ],
     );
     return [
       tabs,
       const SizedBox(height: 14),
       if (_rideTab == 'Live wait time') ..._waitTimes(),
-      if (_rideTab != 'Live wait time' && items.isEmpty) _empty(_rideTab),
       if (_rideTab == 'Water activities') ..._wave(),
+      if (_rideTab == 'Rides' && rides.isEmpty) _empty('Rides'),
       if (_rideTab == 'Rides')
         for (final item in rides) _mediaCard(item),
     ];
   }
 
   List<Widget> _events() => [
-    if (_list('events').isEmpty && _list('waveRainDance').isEmpty)
-      _empty('Events'),
+    if (_list('events').isEmpty) _empty('Events'),
     for (final item in _list('events')) _mediaCard(item, event: true),
-    for (final item in _list('waveRainDance')) _eventWaterCard(item),
   ];
-
-  Widget _eventWaterCard(Map<String, dynamic> item) => Card(
-    color: Colors.white,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _wideImage(item['img']?.toString()),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item['title']?.toString() ?? '',
-                style: const TextStyle(
-                  color: _navy,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Text('Duration: ${item['rideDuration'] ?? 0} minutes'),
-              Wrap(
-                spacing: 7,
-                children: [
-                  for (final t in List<String>.from(
-                    item['timeSlot'] as List? ?? const [],
-                  ))
-                    Chip(label: Text(t), backgroundColor: wonderlaWhite),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
 
   List<Widget> _dining() {
     final outlets = _list('dining');
@@ -644,94 +585,131 @@ class _VisitorSectionScreenState extends State<VisitorSectionScreen> {
     final entries = _list('maintenanceLog');
     if (entries.isEmpty) return [_empty('Maintenance log')];
     return [
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 480;
-          return Container(
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+      Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Service records',
+              style: TextStyle(
+                color: _navy,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-            child: Column(
-              children: [
-                if (!compact)
-                  Container(
-                    color: _navy,
-                    padding: const EdgeInsets.all(14),
-                    child: const Row(
-                      children: [
-                        Expanded(flex: 5, child: _MaintenanceHeading('Ride')),
-                        Expanded(
-                          flex: 4,
-                          child: _MaintenanceHeading('Last service'),
-                        ),
-                        Expanded(flex: 2, child: _MaintenanceHeading('Checks')),
-                      ],
-                    ),
-                  ),
-                for (var i = 0; i < entries.length; i++)
-                  _maintenanceRow(entries[i], i, compact),
-              ],
+          ),
+          Chip(
+            label: Text(
+              '${entries.length} ${entries.length == 1 ? 'record' : 'records'}',
             ),
-          );
-        },
+            backgroundColor: Colors.white,
+          ),
+        ],
       ),
+      const SizedBox(height: 10),
+      for (final item in entries) _maintenanceRow(item),
     ];
   }
 
-  Widget _maintenanceRow(Map<String, dynamic> item, int index, bool compact) {
+  Widget _maintenanceRow(Map<String, dynamic> item) {
     final ride = item['ride']?.toString() ?? '';
     final service = item['lastService']?.toString() ?? '';
     final checks = item['checks']?.toString() ?? '';
-    final background = index.isEven ? Colors.white : wonderlaWhite;
-    if (compact) {
-      return Container(
-        width: double.infinity,
-        color: background,
+    return Card(
+      color: Colors.white,
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: wonderlaBorder),
+      ),
+      child: Padding(
         padding: const EdgeInsets.all(15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(ride, style: const TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 18,
-              runSpacing: 6,
+            Row(
               children: [
-                _maintenanceValue('Last service', service),
-                _maintenanceValue('Checks', checks),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: wonderlaWhite,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.build_outlined, color: _navy),
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Text(
+                    ride.isEmpty ? 'Park equipment' : ride,
+                    style: const TextStyle(
+                      color: _navy,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 22,
+              runSpacing: 12,
+              children: [
+                _maintenanceInfo(
+                  Icons.event_available_outlined,
+                  'Last service',
+                  service,
+                ),
+                _maintenanceInfo(
+                  Icons.checklist_rounded,
+                  'Work completed',
+                  checks,
+                ),
               ],
             ),
           ],
         ),
-      );
-    }
-    return Container(
-      color: background,
-      padding: const EdgeInsets.all(15),
-      child: Row(
-        children: [
-          Expanded(flex: 5, child: Text(ride, softWrap: true)),
-          Expanded(flex: 4, child: Text(service, softWrap: true)),
-          Expanded(flex: 2, child: Text(checks, softWrap: true)),
-        ],
       ),
     );
   }
 
-  Widget _maintenanceValue(String label, String value) => RichText(
-    text: TextSpan(
-      style: const TextStyle(color: wonderlaNavy, fontSize: 13),
-      children: [
-        TextSpan(
-          text: '$label: ',
-          style: const TextStyle(fontWeight: FontWeight.w700),
+  Widget _maintenanceInfo(IconData icon, String label, String value) =>
+      SizedBox(
+        width: 220,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 17, color: wonderlaNavy),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: wonderlaNavy,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    value.isEmpty ? 'Not recorded' : value,
+                    style: const TextStyle(
+                      color: _navy,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        TextSpan(text: value),
-      ],
-    ),
-  );
+      );
 
   Widget _mediaCard(Map<String, dynamic> item, {bool event = false}) => Card(
     color: Colors.white,
@@ -976,17 +954,5 @@ class _LoadError extends StatelessWidget {
         ],
       ),
     ),
-  );
-}
-
-class _MaintenanceHeading extends StatelessWidget {
-  const _MaintenanceHeading(this.label);
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Text(
-    label,
-    softWrap: true,
-    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
   );
 }

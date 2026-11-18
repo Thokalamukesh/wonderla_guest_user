@@ -23,6 +23,9 @@ void main() {
             'name': 'Wonderla Demo',
             'location': 'Demo City',
             'active': true,
+            'events': [
+              {'title': 'Demo Show', 'description': 'A park event'},
+            ],
             'parkMap': {
               'img': '',
               'description': '',
@@ -36,6 +39,20 @@ void main() {
       ),
     );
     expect(find.text('Explore Wonderla'), findsOneWidget);
+    expect(find.text('Rides'), findsOneWidget);
+    expect(find.text('Events'), findsOneWidget);
+    expect(find.text('Rides & Events'), findsNothing);
+    expect(find.text('Live Wait Times'), findsNothing);
+    expect(find.text('Wave Pool & Rain Dance'), findsNothing);
+    await tester.ensureVisible(find.text('Events'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Events'));
+    await tester.pumpAndSettle();
+    expect(find.text('DEMO SHOW'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Park Map'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Park Map'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));

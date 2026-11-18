@@ -108,7 +108,9 @@ class _UsersManagerState extends State<_UsersManager> {
   }
 
   Future<void> _editAccess(Map<String, dynamic> user) async {
-    if (user['role'] != 'park' || user['username'] == widget.currentUsername) return;
+    if (user['role'] != 'park' || user['username'] == widget.currentUsername) {
+      return;
+    }
     final current = List<String>.from(user['permissions'] as List? ?? const ['all']);
     var all = current.contains('all');
     final selected = <String>{if (!all) ...current};

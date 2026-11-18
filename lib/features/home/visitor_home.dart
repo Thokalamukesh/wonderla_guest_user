@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../cms/cms_api.dart';
 import 'configured_park_map_screen.dart';
+import 'home_shortcut_catalog.dart';
 import '../cms/cms_screen.dart';
-import '../../shared/scroll_reveal.dart';
 import '../../shared/wonderla_palette.dart';
 
 part 'visitor_section_screen.dart';
@@ -30,65 +29,6 @@ class _VisitorHomeState extends State<VisitorHome> {
   String? _error;
   final Map<String, Map<String, dynamic>> _parkCache = {};
   final Map<String, Future<Map<String, dynamic>>> _parkRequests = {};
-
-  static const _tiles = <(String, String, IconData, String, bool)>[
-    (
-      'PARK MAP',
-      'parkMap',
-      LucideIcons.mapPinned,
-      'exploreParkMapImageUrl',
-      true,
-    ),
-    (
-      'RIDES & EVENTS',
-      'ridesEvents',
-      LucideIcons.ferrisWheel,
-      'exploreRidesImageUrl',
-      true,
-    ),
-    (
-      'DINING & MENU',
-      'diningMenu',
-      LucideIcons.utensils,
-      'exploreDiningImageUrl',
-      true,
-    ),
-    (
-      'LIVE WAIT TIMES',
-      'liveWaitTimes',
-      LucideIcons.timer,
-      'exploreWaitTimesImageUrl',
-      false,
-    ),
-    (
-      'RIDE GUIDELINES',
-      'rideGuidelines',
-      LucideIcons.ruler,
-      'exploreGuidelinesImageUrl',
-      true,
-    ),
-    (
-      'WAVE POOL & RAIN DANCE',
-      'wavePool',
-      LucideIcons.waves,
-      'exploreWaveImageUrl',
-      false,
-    ),
-    (
-      'SAFETY & HYGIENE',
-      'safetyHygiene',
-      LucideIcons.shieldCheck,
-      'exploreSafetyImageUrl',
-      true,
-    ),
-    (
-      'MAINTENANCE LOG',
-      'maintenanceLog',
-      LucideIcons.wrench,
-      'exploreMaintenanceImageUrl',
-      true,
-    ),
-  ];
 
   @override
   void initState() {
@@ -224,31 +164,26 @@ class _VisitorHomeState extends State<VisitorHome> {
     return '${_api.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
   }
 
-  void _openSection(String section) {
+  void _openSection(HomeShortcutDefinition shortcut) {
     final cfg = _park;
     if (cfg == null) return;
-    if (section == 'PARK MAP') {
+    if (shortcut.keyName == 'parkMap') {
       _openParkMap(cfg);
       return;
     }
-    final title = switch (section) {
-      'RIDES & EVENTS' ||
-      'LIVE WAIT TIMES' ||
-      'WAVE POOL & RAIN DANCE' => 'RIDES & WATER ACTIVITIES',
-      _ => section,
-    };
-    final initialTab = switch (section) {
-      'LIVE WAIT TIMES' => 'Live wait time',
-      'WAVE POOL & RAIN DANCE' => 'Water activities',
-      _ => null,
-    };
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => VisitorSectionScreen(
-          title: title,
+      PageRouteBuilder<void>(
+        transitionDuration: const Duration(milliseconds: 200),
+        reverseTransitionDuration: const Duration(milliseconds: 160),
+        pageBuilder: (_, _, _) => VisitorSectionScreen(
+          title: shortcut.section,
           config: cfg,
           api: _api,
-          initialTab: initialTab,
+          initialTab: shortcut.initialTab,
+        ),
+        transitionsBuilder: (_, animation, _, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: child,
         ),
       ),
     );
@@ -263,25 +198,59 @@ class _VisitorHomeState extends State<VisitorHome> {
     );
   }
 
+  List<HomeShortcutDefinition> _configuredShortcuts(
+    Map<String, dynamic> config,
+  ) {
+    final configured = config['homeShortcuts'];
+    if (configured is List) {
+      return configured
+          .whereType<Map>()
+          .where((setting) => setting['visible'] != false)
+          .map(
+            (setting) =>
+                HomeShortcutCatalog.byKey(setting['key']?.toString() ?? ''),
+          )
+          .whereType<HomeShortcutDefinition>()
+          .toList();
+    }
+
+    // Read the earlier visibility format until the CMS saves the ordered list.
+    final legacyVisibility = config['homeCardVisibility'] as Map?;
+    final keys = [...HomeShortcutCatalog.defaultKeys];
+    for (final key in const ['liveWaitTimes', 'wavePool']) {
+      if (legacyVisibility?[key] == true) keys.add(key);
+    }
+    return keys
+        .where((key) {
+          final specific = legacyVisibility == null
+              ? null
+              : legacyVisibility[key];
+          final combined = legacyVisibility == null
+              ? null
+              : legacyVisibility['ridesEvents'];
+          final value =
+              specific ?? (key == 'rides' || key == 'events' ? combined : null);
+          return value != false;
+        })
+        .map(HomeShortcutCatalog.byKey)
+        .whereType<HomeShortcutDefinition>()
+        .toList();
+  }
+
   Widget _tileGrid(
-    List<(String, String, IconData, String, bool)> tiles,
+    List<HomeShortcutDefinition> shortcuts,
     Map<String, dynamic> config, {
     required bool compact,
     required int delayOffset,
   }) {
+    if (shortcuts.isEmpty) return const SizedBox.shrink();
     final columns = MediaQuery.sizeOf(context).width < 355 ? 1 : 2;
-    final visibility = config['homeCardVisibility'] as Map?;
-    final visibleTiles = tiles.where((tile) {
-      final setting = visibility?[tile.$2];
-      return setting is bool ? setting : tile.$5;
-    }).toList();
-    if (visibleTiles.isEmpty) return const SizedBox.shrink();
     return GridView.builder(
       padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       clipBehavior: Clip.none,
-      itemCount: visibleTiles.length,
+      itemCount: shortcuts.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
         childAspectRatio: columns == 1
@@ -293,20 +262,23 @@ class _VisitorHomeState extends State<VisitorHome> {
         mainAxisSpacing: compact ? 10 : 16,
       ),
       itemBuilder: (context, index) {
-        final tile = visibleTiles[index];
-        final title = tile.$1;
-        final customTitle = (config['homeCardLabels'] as Map?)?[tile.$2]
-            ?.toString()
-            .trim();
+        final shortcut = shortcuts[index];
+        final labels = config['homeCardLabels'] as Map?;
+        final labelValue = labels == null ? null : labels[shortcut.keyName];
+        final customTitle = labelValue?.toString().trim();
         final hasCustomTitle = customTitle != null && customTitle.isNotEmpty;
         return ShortcutCard(
-          title: hasCustomTitle ? customTitle : title,
+          title: hasCustomTitle ? customTitle : shortcut.label,
           titleCase: !hasCustomTitle,
-          icon: tile.$3,
-          imageUrl: _imageUrl(config[tile.$4]?.toString()),
+          icon: shortcut.icon,
+          imageUrl: _imageUrl(
+            shortcut.imageConfigKey == null
+                ? null
+                : config[shortcut.imageConfigKey!]?.toString(),
+          ),
           delay: (delayOffset + index) * 45,
           compact: compact,
-          onTap: () => _openSection(title),
+          onTap: () => _openSection(shortcut),
         );
       },
     );
@@ -415,7 +387,7 @@ class _VisitorHomeState extends State<VisitorHome> {
                                   ),
                                   const SizedBox(height: 20),
                                   _tileGrid(
-                                    _tiles,
+                                    _configuredShortcuts(cfg),
                                     cfg,
                                     compact: constraints.maxWidth < 520,
                                     delayOffset: 0,
