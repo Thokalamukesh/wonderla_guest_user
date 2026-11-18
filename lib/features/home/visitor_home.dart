@@ -27,52 +27,44 @@ class _VisitorHomeState extends State<VisitorHome> {
   bool _loading = true;
   String? _error;
 
-  static const _tiles = <(String, String, IconData, String)>[
+  static const _tiles = <(String, IconData, String)>[
     (
       'PARK MAP',
-      'Find rides & facilities',
       LucideIcons.mapPinned,
       'exploreParkMapImageUrl',
     ),
     (
       'RIDES & EVENTS',
-      'Explore rides and shows',
       LucideIcons.ferrisWheel,
       'exploreRidesImageUrl',
     ),
     (
       'DINING & MENU',
-      'Food, menus & prices',
       LucideIcons.utensils,
       'exploreDiningImageUrl',
     ),
     (
       'LIVE WAIT TIMES',
-      'Current ride queues',
       LucideIcons.timer,
       'exploreWaitTimesImageUrl',
     ),
     (
       'RIDE GUIDELINES',
-      'Height limits & rules',
       LucideIcons.ruler,
       'exploreGuidelinesImageUrl',
     ),
     (
       'WAVE POOL & RAIN DANCE',
-      'Sessions & timings',
       LucideIcons.waves,
       'exploreWaveImageUrl',
     ),
     (
       'SAFETY & HYGIENE',
-      'Plan a safe visit',
       LucideIcons.shieldCheck,
       'exploreSafetyImageUrl',
     ),
     (
       'MAINTENANCE LOG',
-      'Ride service updates',
       LucideIcons.wrench,
       'exploreMaintenanceImageUrl',
     ),
@@ -211,7 +203,7 @@ class _VisitorHomeState extends State<VisitorHome> {
   }
 
   Widget _tileGrid(
-    List<(String, String, IconData, String)> tiles,
+    List<(String, IconData, String)> tiles,
     Map<String, dynamic> config, {
     required bool compact,
     required int delayOffset,
@@ -234,9 +226,8 @@ class _VisitorHomeState extends State<VisitorHome> {
         final title = tile.$1;
         return ShortcutCard(
           title: tile.$1,
-          subtitle: tile.$2,
-          icon: tile.$3,
-          imageUrl: _imageUrl(config[tile.$4]?.toString()),
+          icon: tile.$2,
+          imageUrl: _imageUrl(config[tile.$3]?.toString()),
           delay: (delayOffset + index) * 45,
           compact: compact,
           onTap: () => _openSection(title),
@@ -342,14 +333,6 @@ class _VisitorHomeState extends State<VisitorHome> {
                                             fontWeight: FontWeight.w800,
                                             letterSpacing: -.5,
                                           ),
-                                        ),
-                                      ),
-                                      Text(
-                                        'All shortcuts',
-                                        style: TextStyle(
-                                          color: wonderlaMuted,
-                                          fontSize: compactHome ? 13 : 14,
-                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ],
@@ -698,7 +681,6 @@ class ShortcutCard extends StatelessWidget {
   const ShortcutCard({
     super.key,
     required this.title,
-    required this.subtitle,
     required this.icon,
     required this.imageUrl,
     required this.delay,
@@ -707,7 +689,6 @@ class ShortcutCard extends StatelessWidget {
   });
 
   final String title;
-  final String subtitle;
   final String imageUrl;
   final IconData icon;
   final int delay;
@@ -801,17 +782,6 @@ class ShortcutCard extends StatelessWidget {
                               fontSize: compact ? 14 : 16,
                               height: 1.15,
                               fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            subtitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: wonderlaNavy,
-                              fontSize: compact ? 12 : 14,
-                              height: 1.25,
                             ),
                           ),
                         ],
