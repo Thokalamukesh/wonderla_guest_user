@@ -169,11 +169,9 @@ out center tags;
     final coordinates =
         '${from.longitude},${from.latitude};${to.longitude},${to.latitude}';
     final isWalking = mode == RouteMode.walking;
-    final proxyPath = isWalking ? '/walking-route' : '/driving-route';
     final routerUrl = isWalking ? _walkingRouterUrl : _drivingRouterUrl;
-    final routeUri = kIsWeb
-        ? Uri.base.resolve('$proxyPath/$coordinates')
-        : Uri.parse('$routerUrl/$coordinates');
+    // Use the public router directly so local web builds can request routes.
+    final routeUri = Uri.parse('$routerUrl/$coordinates');
     final primaryUri = routeUri.replace(
       queryParameters: const {
         'overview': 'full',
@@ -219,9 +217,7 @@ out center tags;
       'shape_format': 'geojson',
       'directions_type': 'instructions',
     };
-    final uri = kIsWeb
-        ? Uri.base.resolve('/valhalla-route/route')
-        : Uri.parse(_valhallaRouterUrl);
+    final uri = Uri.parse(_valhallaRouterUrl);
     return uri.replace(queryParameters: {'json': jsonEncode(payload)});
   }
 

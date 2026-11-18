@@ -1,5 +1,36 @@
 # Wonderla Bengaluru Map
 
+## Run locally
+
+Install Flutter 3.47.9 or newer and Node.js. The Next.js backend is in this project's `backend` folder. Open a terminal at the Flutter project root and run:
+
+```sh
+cd backend
+npm.cmd install
+npm.cmd run dev
+```
+
+In Command Prompt, `npm install` and `npm run dev` also work. In PowerShell, use `npm.cmd` if the `npm` command is blocked by the script execution policy.
+
+Keep that terminal open. The backend listens at `http://localhost:3000`.
+
+In a second terminal, from this Flutter project, run:
+
+```sh
+flutter pub get
+flutter run -d chrome
+```
+
+The backend seeds the park directory and a local admin account on first run. Admin credentials are configured in `backend/.env.local`; `backend/.env.example` documents these settings. The Flutter web client defaults to `http://localhost:3000`; if the backend uses another URL, pass it explicitly:
+
+```sh
+flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:3000
+```
+
+For the Windows desktop app, use `flutter run -d windows --dart-define=API_BASE_URL=http://localhost:3000`.
+
+To launch only the Flutter web client without Chrome automation, use `flutter run -d web-server --web-port 8080` and open `http://localhost:8080`.
+
 The app uses `flutter_map` with OpenStreetMap tiles and is initially centered on Wonderla Bengaluru (12.8343, 77.4010). On phones the map and in-park location list each use about half the screen; on wider layouts they sit side by side. The map requests device location at runtime and displays the live position when access is available. Chillies, Greens, the multipurpose hall, Wave Pools 1 and 2, Lazy River, and parking are included from verified OpenStreetMap features. Search also finds nearby mapped results when submitted. Selecting a destination starts a walking route, and live GPS updates can trigger an off-route recalculation.
 
 ## Map services
@@ -29,6 +60,7 @@ The Flutter web app uses credentialed requests so the existing admin session coo
 flutter run --dart-define=API_BASE_URL=https://your-site.example
 ```
 
-The CMS uses the existing admin login and session cookie. It supports superadmin and park editor roles, park creation/deletion and active status, park content CRUD, map image/places/zones, users, Google Maps settings, and the existing image upload endpoint. Images may be PNG, JPG, WebP, or GIF up to 5 MB. The picker uploads the image immediately; click **Save changes** to save the park configuration that points to it. The welcome banner also supports an optional video (`heroVideoUrl`), which plays muted in a loop in place of its image. Video uploads use `POST /qr-code/api/parks/{slug}/videos` with the multipart field `video`, and expect an `{ "ok": true, "url": "..." }` response. The Flutter repository does not include the remote Next.js API, so that video endpoint must be implemented on the connected backend for direct uploads to work; pasting a hosted video URL works without that upload route. The app contains no admin password or server secret.
+The CMS uses the backend's admin login and session cookie. It supports superadmin and park editor roles, park creation/deletion and active status, park content CRUD, map image/places/zones, users, Google Maps settings, image uploads up to 5 MB, and video uploads up to 50 MB (MP4, WebM, or MOV). Uploads are saved under the backend's `public/uploads` folder locally. The app contains no admin password or server secret.
 
-The existing backend must be deployed and reachable. For production uploads and persistent park/user data, configure the Vercel Blob store as required by the Next.js project. Flutter web on a different origin also needs the backend to permit credentialed CORS; deploying the web client on the same origin avoids that extra setup. QR URLs continue to resolve to the React website's `/qr-code/{slug}` fallback.
+The existing backend must be reachable for park content, admin login, uploads, and persistent park/user data. Flutter web on a different origin needs the backend to permit credentialed CORS. QR URLs continue to resolve to the React website's `/qr-code/{slug}` fallback.
+

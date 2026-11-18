@@ -1,0 +1,21 @@
+/node_modules
+**/node_modules/
+/.next
+/out
+/build
+**/dist/
+npm-debug.log*
+.env*.local
+# Park content + users created at runtime:
+/data
+
+# OpenNext
+.open-next
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+
+/.next-backup/
+/.next-dev/

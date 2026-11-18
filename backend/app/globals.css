@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-mulish: "Mulish", system-ui, sans-serif;
+  --font-anton: "Anton", system-ui, sans-serif;
+  --font-oswald: "Oswald", system-ui, sans-serif;
+  --wonderla-blue: #183d9a;
+  --wonderla-blue-light: #477fdf;
+  --wonderla-glass: rgba(255, 255, 255, 0.84);
+  --wonderla-glass-tint: rgba(234, 241, 255, 0.82);
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  min-height: 100%;
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: auto;
+  font-family: var(--font-mulish);
+  color: #101a38;
+  background: #f4f6fb;
+  text-rendering: optimizeLegibility;
+}
+
+body { min-height: 100vh; }
+
+* { box-sizing: border-box; }
+
+button, input, textarea, select { font: inherit; }
+
+button { -webkit-tap-highlight-color: transparent; }
+
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 3px solid #ffcf00;
+  outline-offset: 2px;
+}
+
+::selection { color: #101a38; background: #ffdc42; }
+
+/* Admin forms share consistent sizing and keyboard focus across every panel. */
+[class*="border-slate-300"][class*="rounded"] {
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+.mulish,
+.font-mulish {
+  font-family: var(--font-mulish);
+}
+
+.park-map-scroll-panel {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+[data-scroll-reveal] {
+  transition: opacity 500ms ease, transform 500ms cubic-bezier(0.2, 0.75, 0.25, 1), box-shadow 220ms ease;
+}
+
+[data-scroll-reveal]:not(.is-visible) {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0) scale(0.985);
+}
+
+[data-scroll-reveal].is-visible { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+
+[data-guest-experience] .bg-yellow {
+  background-image: none;
+  background-color: #eaf1ff;
+}
+
+[data-guest-experience] .text-yellow { color: #c9dcff; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-scroll-reveal], [data-scroll-reveal]:not(.is-visible) {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

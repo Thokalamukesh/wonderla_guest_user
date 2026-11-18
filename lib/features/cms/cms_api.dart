@@ -9,8 +9,8 @@ import 'cms_http_client.dart';
 
 final _httpClient = createCmsHttpClient();
 
-/// Flutter client for the existing Next.js QR admin API. Set API_BASE_URL for
-/// native builds, e.g. https://your-domain.com. Web defaults to current host.
+/// Flutter client for the existing Next.js QR admin API. Set API_BASE_URL to
+/// the backend origin when it is not available on the current web host.
 class CmsApi {
   CmsApi({String? baseUrl}) : _baseUrl = baseUrl ?? _configuredBaseUrl();
 
@@ -24,7 +24,7 @@ class CmsApi {
       if (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1') {
         return 'http://localhost:3000';
       }
-      // Keep browser API requests same-origin; Vercel proxies them to the CMS.
+      // Production deployments can serve the API from the same origin.
       return Uri.base.origin;
     }
     return _definedBaseUrl;
