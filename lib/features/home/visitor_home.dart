@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -26,55 +28,28 @@ class _VisitorHomeState extends State<VisitorHome> {
   Map<String, dynamic>? _park;
   bool _loading = true;
   String? _error;
+  final Map<String, Map<String, dynamic>> _parkCache = {};
+  final Map<String, Future<Map<String, dynamic>>> _parkRequests = {};
 
-  static const _tiles = <(String, IconData, String)>[
-    (
-      'PARK MAP',
-      LucideIcons.mapPinned,
-      'exploreParkMapImageUrl',
-    ),
+  static const _tiles = <(String, String?, IconData, String)>[
+    ('PARK MAP', 'parkMap', LucideIcons.mapPinned, 'exploreParkMapImageUrl'),
     (
       'RIDES & EVENTS',
+      'ridesEvents',
       LucideIcons.ferrisWheel,
       'exploreRidesImageUrl',
     ),
-    (
-      'DINING & MENU',
-      LucideIcons.utensils,
-      'exploreDiningImageUrl',
-    ),
-    (
-      'LIVE WAIT TIMES',
-      LucideIcons.timer,
-      'exploreWaitTimesImageUrl',
-    ),
-    (
-      'RIDE GUIDELINES',
-      LucideIcons.ruler,
-      'exploreGuidelinesImageUrl',
-    ),
-    (
-      'WAVE POOL & RAIN DANCE',
-      LucideIcons.waves,
-      'exploreWaveImageUrl',
-    ),
+    ('DINING & MENU', null, LucideIcons.utensils, 'exploreDiningImageUrl'),
+    ('LIVE WAIT TIMES', null, LucideIcons.timer, 'exploreWaitTimesImageUrl'),
+    ('RIDE GUIDELINES', null, LucideIcons.ruler, 'exploreGuidelinesImageUrl'),
+    ('WAVE POOL & RAIN DANCE', null, LucideIcons.waves, 'exploreWaveImageUrl'),
     (
       'SAFETY & HYGIENE',
+      null,
       LucideIcons.shieldCheck,
       'exploreSafetyImageUrl',
     ),
-    (
-      'MAINTENANCE LOG',
-      LucideIcons.wrench,
-      'exploreMaintenanceImageUrl',
-    ),
-  ];
-
-  static const _moreSections = [
-    'EVENTS',
-    'RIDE GUIDELINES',
-    'SAFETY & HYGIENE',
-    'MAINTENANCE LOG',
+    ('MAINTENANCE LOG', null, LucideIcons.wrench, 'exploreMaintenanceImageUrl'),
   ];
 
   @override
@@ -118,6 +93,14 @@ class _VisitorHomeState extends State<VisitorHome> {
         _parks = (await _api.parks())
             .where((p) => p['active'] == true)
             .toList();
+        for (final park in _parks) {
+          final identity = '${park['name']} ${park['location']} ${park['slug']}'
+              .toLowerCase();
+          if (identity.contains('bengaluru') ||
+              identity.contains('bangalore')) {
+            unawaited(_prefetchPark(park['slug'] as String));
+          }
+        }
       }
     } catch (e) {
       _error = _friendlyError(e);
@@ -126,23 +109,60 @@ class _VisitorHomeState extends State<VisitorHome> {
   }
 
   Future<void> _loadPark(String slug) async {
+    final cached = _parkCache[slug];
+    if (cached != null) {
+      if (mounted) {
+        setState(() {
+          _park = cached;
+          _loading = false;
+          _error = null;
+        });
+      }
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final data = await _api.park(slug);
+      final data = await _requestPark(slug);
       if (data['active'] == false) {
         throw const CmsApiException(
           'This park guide is not currently available.',
         );
       }
+      _parkCache[slug] = data;
       if (mounted) setState(() => _park = data);
     } catch (e) {
       if (mounted) setState(() => _error = _friendlyError(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _prefetchPark(String slug) async {
+    try {
+      await _requestPark(slug);
+    } catch (_) {
+      // Keep the directory usable if background preloading fails.
+    }
+  }
+
+  Future<Map<String, dynamic>> _requestPark(String slug) {
+    final cached = _parkCache[slug];
+    if (cached != null) return Future.value(cached);
+    final pending = _parkRequests[slug];
+    if (pending != null) return pending;
+    late final Future<Map<String, dynamic>> request;
+    request = _api
+        .park(slug)
+        .then((data) {
+          _parkCache[slug] = data;
+          return data;
+        })
+        .whenComplete(() => _parkRequests.remove(slug));
+    _parkRequests[slug] = request;
+    return request;
   }
 
   String _friendlyError(Object error) {
@@ -157,11 +177,6 @@ class _VisitorHomeState extends State<VisitorHome> {
     if (Uri.tryParse(value)?.hasScheme == true) return value;
     return '${_api.baseUrl}${value.startsWith('/') ? '' : '/'}$value';
   }
-
-  String _displayTitle(String value) => value
-      .split(' ')
-      .map((word) => '${word[0]}${word.substring(1).toLowerCase()}')
-      .join(' ');
 
   void _openSection(String section) {
     final cfg = _park;
@@ -203,7 +218,7 @@ class _VisitorHomeState extends State<VisitorHome> {
   }
 
   Widget _tileGrid(
-    List<(String, IconData, String)> tiles,
+    List<(String, String?, IconData, String)> tiles,
     Map<String, dynamic> config, {
     required bool compact,
     required int delayOffset,
@@ -224,10 +239,15 @@ class _VisitorHomeState extends State<VisitorHome> {
       itemBuilder: (context, index) {
         final tile = tiles[index];
         final title = tile.$1;
+        final customTitle = (config['homeCardLabels'] as Map?)?[tile.$2]
+            ?.toString()
+            .trim();
         return ShortcutCard(
-          title: tile.$1,
-          icon: tile.$2,
-          imageUrl: _imageUrl(config[tile.$3]?.toString()),
+          title: customTitle == null || customTitle.isEmpty
+              ? title
+              : customTitle,
+          icon: tile.$3,
+          imageUrl: _imageUrl(config[tile.$4]?.toString()),
           delay: (delayOffset + index) * 45,
           compact: compact,
           onTap: () => _openSection(title),
@@ -343,34 +363,6 @@ class _VisitorHomeState extends State<VisitorHome> {
                                     cfg,
                                     compact: constraints.maxWidth < 520,
                                     delayOffset: 0,
-                                  ),
-                                  const SizedBox(height: 26),
-                                  const Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      'MORE PARK INFO',
-                                      style: TextStyle(
-                                        color: wonderlaMuted,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: .8,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 4,
-                                    children: [
-                                      for (final section in _moreSections)
-                                        ActionChip(
-                                          label: Text(_displayTitle(section)),
-                                          onPressed: () =>
-                                              _openSection(section),
-                                          backgroundColor: Colors.white,
-                                          side: BorderSide.none,
-                                        ),
-                                    ],
                                   ),
                                 ],
                               ),
@@ -727,7 +719,7 @@ class ShortcutCard extends StatelessWidget {
         Transform.scale(scale: value, child: child),
     child: LayoutBuilder(
       builder: (context, constraints) {
-        final imageSize = (constraints.maxWidth * .31).clamp(52.0, 72.0);
+        final imageSize = (constraints.maxWidth * .24).clamp(38.0, 48.0);
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -755,8 +747,8 @@ class ShortcutCard extends StatelessWidget {
               onTap: onTap,
               child: Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: compact ? 10 : 14,
-                  vertical: compact ? 10 : 14,
+                  horizontal: compact ? 8 : 12,
+                  vertical: compact ? 8 : 12,
                 ),
                 child: Row(
                   children: [
@@ -767,7 +759,7 @@ class ShortcutCard extends StatelessWidget {
                         child: _tileImage(imageSize),
                       ),
                     ),
-                    SizedBox(width: compact ? 9 : 13),
+                    SizedBox(width: compact ? 7 : 10),
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -775,12 +767,12 @@ class ShortcutCard extends StatelessWidget {
                         children: [
                           Text(
                             _titleCase(title),
-                            maxLines: 2,
+                            maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: _navy,
-                              fontSize: compact ? 14 : 16,
-                              height: 1.15,
+                              fontSize: compact ? 12 : 14,
+                              height: 1.08,
                               fontWeight: FontWeight.w800,
                             ),
                           ),

@@ -16,6 +16,7 @@ class _AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<_AdminDashboard> {
   final _sections = const [
     ('Park overview', LucideIcons.chartNoAxesCombined),
+    ('Home card labels', LucideIcons.type),
     ('Parks', LucideIcons.building2),
     ('Rides', LucideIcons.ferrisWheel),
     ('Events', LucideIcons.calendarDays),
@@ -107,9 +108,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
     widget.user['permissions'] as List? ?? const <String>[],
   );
   bool _canAccess(String section) =>
-      _super ||
-      _permissions.contains('all') ||
-      _permissions.contains(section);
+      _super || _permissions.contains('all') || _permissions.contains(section);
   bool get _canSave =>
       _config != null &&
       _canAccess(_section) &&
@@ -535,6 +534,8 @@ class _AdminDashboardState extends State<_AdminDashboard> {
         const SizedBox(height: 18),
         if (_section == 'Park overview' && _canAccess('Park overview'))
           ScrollReveal(child: _overview()),
+        if (_section == 'Home card labels' && _canAccess(_section))
+          ScrollReveal(child: _homeCardLabelsPage()),
         if (_section == 'Parks') ScrollReveal(child: _parksPage()),
         if (_listKeys.containsKey(_section) && _canAccess(_section))
           ScrollReveal(child: _collectionPage()),
@@ -558,6 +559,7 @@ class _AdminDashboardState extends State<_AdminDashboard> {
   String get _sectionSubtitle => switch (_section) {
     'Park overview' =>
       'Update park identity, brand images and publishing status.',
+    'Home card labels' => 'Edit the Park Map and Rides & Events labels shown on the visitor home page.',
     'Parks' =>
       'Create parks and control which parks appear in the visitor directory.',
     'Park map & places' =>
@@ -724,6 +726,51 @@ class _AdminDashboardState extends State<_AdminDashboard> {
       ),
     ),
   );
+
+  Widget _homeCardLabelsPage() {
+    if (_config == null) {
+      return const _EmptyCard(
+        'No park selected',
+        'Select a park to edit its visitor home page labels.',
+      );
+    }
+    final labels = Map<String, dynamic>.from(
+      (_config!['homeCardLabels'] as Map?)?.cast<String, dynamic>() ?? const {},
+    );
+    _config!['homeCardLabels'] = labels;
+    return Card(
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Visitor home shortcuts',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'These labels appear on the shortcut cards for this park. Leave a field empty to use its default label.',
+              style: TextStyle(color: wonderlaNavy),
+            ),
+            const SizedBox(height: 18),
+            _textField(
+              'Park Map label',
+              labels['parkMap']?.toString() ?? '',
+              (value) => labels['parkMap'] = value,
+            ),
+            const SizedBox(height: 14),
+            _textField(
+              'Rides & Events label',
+              labels['ridesEvents']?.toString() ?? '',
+              (value) => labels['ridesEvents'] = value,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _parksPage() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,

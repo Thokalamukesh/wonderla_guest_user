@@ -25,6 +25,7 @@ class _UsersManagerState extends State<_UsersManager> {
   final Set<String> _selectedAccess = {};
   static const _accessSections = [
     'Park overview',
+    'Home card labels',
     'Rides',
     'Events',
     'Dining & menus',
